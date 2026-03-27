@@ -6,9 +6,11 @@ import {
   ScrollView,
   StyleSheet,
   Share,
+  Clipboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStorage } from '../storage/StorageContext';
+import { useFarm } from '../storage/FarmContext';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 import SectionHeader from '../components/SectionHeader';
@@ -238,6 +240,14 @@ function HistoricoAplicacoes({ talhoes }) {
 
 export default function RelatorioScreen() {
   const { adubos, liquidos, talhoes } = useStorage();
+  const { farmCode, farmName } = useFarm();
+  const [copiado, setCopiado] = useState(false);
+
+  function handleCopiarCodigo() {
+    Clipboard.setString(farmCode);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  }
 
   async function exportarCSV() {
     const linhas = ['Data,Talhão,Tipo,Descrição'];
@@ -291,6 +301,26 @@ export default function RelatorioScreen() {
           <AlertasEstoque adubos={adubos} liquidos={liquidos} />
           <ResumoFinanceiro adubos={adubos} liquidos={liquidos} />
           <HistoricoAplicacoes talhoes={talhoes} />
+
+          {/* Código da fazenda */}
+          {farmCode ? (
+            <Card style={styles.farmCodeCard}>
+              <View style={styles.blocoHeader}>
+                <Ionicons name="link-outline" size={18} color={PRIMARY} />
+                <Text style={[styles.blocoTitulo, { color: PRIMARY }]}>Código da Fazenda</Text>
+              </View>
+              {farmName ? <Text style={styles.farmNome}>{farmName}</Text> : null}
+              <View style={styles.farmCodeRow}>
+                <Text style={styles.farmCodeValor}>{farmCode}</Text>
+                <TouchableOpacity style={styles.farmCopiarBtn} onPress={handleCopiarCodigo}>
+                  <Text style={styles.farmCopiarTxt}>{copiado ? 'Copiado!' : 'Copiar'}</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.farmCodeDica}>
+                Compartilhe esse código com outro celular para sincronizar os dados.
+              </Text>
+            </Card>
+          ) : null}
         </View>
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -357,4 +387,13 @@ const styles = StyleSheet.create({
   registroTalhao: { fontFamily: 'Inter_700Bold', fontSize: 12 },
   registroData: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#9CA3AF' },
   registroDesc: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#374151', marginTop: 2, lineHeight: 19 },
+
+  // Farm code
+  farmCodeCard: { padding: 16, gap: 10, backgroundColor: '#F0FDF4', borderWidth: 1.5, borderColor: '#86EFAC' },
+  farmNome: { fontFamily: 'Inter_500Medium', fontSize: 13, color: '#374151' },
+  farmCodeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  farmCodeValor: { fontFamily: 'Inter_700Bold', fontSize: 28, color: PRIMARY, letterSpacing: 5, flex: 1 },
+  farmCopiarBtn: { backgroundColor: PRIMARY, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
+  farmCopiarTxt: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#fff' },
+  farmCodeDica: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#166534', lineHeight: 18 },
 });
