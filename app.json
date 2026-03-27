@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Montico Farm Pro",
+    "slug": "montico-farm-pro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B4332"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.montico.farmpro"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a6b2a"
+      },
+      "package": "com.montico.farmpro"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "baseUrl": "/montico-farm-pro"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "13bad5f1-577f-472b-a6ca-9d305014c664"
+      }
+    },
+    "owner": "gabrielmonticon",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/13bad5f1-577f-472b-a6ca-9d305014c664"
+    }
+  }
+}
