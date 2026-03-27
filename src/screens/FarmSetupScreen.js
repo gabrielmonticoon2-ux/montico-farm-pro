@@ -13,12 +13,14 @@ import {
 import { useFarm } from '../storage/FarmContext';
 
 export default function FarmSetupScreen() {
-  const { criarFazenda, entrarFazenda, erro } = useFarm();
+  const { criarFazenda, confirmarEntrada, entrarFazenda, erro } = useFarm();
 
   const [nomeFazenda, setNomeFazenda] = useState('');
   const [codigoGerado, setCodigoGerado] = useState(null);
+  const [nomeGerado, setNomeGerado]     = useState('');
   const [copiado, setCopiado]           = useState(false);
   const [criando, setCriando]           = useState(false);
+  const [confirmando, setConfirmando]   = useState(false);
 
   const [codigoEntrada, setCodigoEntrada] = useState('');
   const [entrando, setEntrando]           = useState(false);
@@ -27,12 +29,23 @@ export default function FarmSetupScreen() {
   async function handleCriar() {
     setCriando(true);
     try {
-      const code = await criarFazenda(nomeFazenda.trim() || 'Minha Fazenda');
+      const nome = nomeFazenda.trim() || 'Minha Fazenda';
+      const { code } = await criarFazenda(nome);
       setCodigoGerado(code);
+      setNomeGerado(nome);
     } catch (e) {
       console.error(e);
     } finally {
       setCriando(false);
+    }
+  }
+
+  async function handleContinuar() {
+    setConfirmando(true);
+    try {
+      await confirmarEntrada(codigoGerado, nomeGerado);
+    } finally {
+      setConfirmando(false);
     }
   }
 
@@ -82,18 +95,26 @@ export default function FarmSetupScreen() {
             }
           </TouchableOpacity>
         ) : (
-          <View style={s.codigoBox}>
-            <Text style={s.codigoLabel}>Código da fazenda:</Text>
-            <View style={s.codigoRow}>
-              <Text style={s.codigoValor}>{codigoGerado}</Text>
-              <TouchableOpacity style={s.copiarBtn} onPress={handleCopiar}>
-                <Text style={s.copiarTexto}>{copiado ? 'Copiado!' : 'Copiar'}</Text>
-              </TouchableOpacity>
+          <>
+            <View style={s.codigoBox}>
+              <Text style={s.codigoLabel}>Código da fazenda:</Text>
+              <View style={s.codigoRow}>
+                <Text style={s.codigoValor}>{codigoGerado}</Text>
+                <TouchableOpacity style={s.copiarBtn} onPress={handleCopiar}>
+                  <Text style={s.copiarTexto}>{copiado ? 'Copiado!' : 'Copiar'}</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={s.codigoDica}>
+                Anote ou compartilhe esse código com o segundo celular antes de continuar.
+              </Text>
             </View>
-            <Text style={s.codigoDica}>
-              Compartilhe esse código com o segundo iPhone para sincronizar os dados em tempo real.
-            </Text>
-          </View>
+            <TouchableOpacity style={[s.botaoPrimario, { marginTop: 12 }]} onPress={handleContinuar} disabled={confirmando}>
+              {confirmando
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={s.botaoPrimarioTexto}>ENTRAR NO APP</Text>
+              }
+            </TouchableOpacity>
+          </>
         )}
       </View>
 

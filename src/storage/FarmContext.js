@@ -78,14 +78,18 @@ export function FarmProvider({ children }) {
     };
 
     await setDoc(doc(db, 'farms', code), dadosIniciais);
+    // Não entra no app ainda — deixa FarmSetupScreen mostrar o código primeiro
+    return { code, nome: nome || 'Minha Fazenda' };
+  }
+
+  // Chamado após o usuário ver e copiar o código
+  async function confirmarEntrada(code, nome) {
     await Promise.all([
       AsyncStorage.setItem(FARM_CODE_KEY, code),
       AsyncStorage.setItem(FARM_NAME_KEY, nome || 'Minha Fazenda'),
     ]);
-
     setFarmCode(code);
     setFarmName(nome || 'Minha Fazenda');
-    return code;
   }
 
   async function entrarFazenda(code) {
@@ -124,7 +128,7 @@ export function FarmProvider({ children }) {
   }
 
   return (
-    <FarmContext.Provider value={{ farmCode, farmName, loading, erro, criarFazenda, entrarFazenda, sairFazenda }}>
+    <FarmContext.Provider value={{ farmCode, farmName, loading, erro, criarFazenda, confirmarEntrada, entrarFazenda, sairFazenda }}>
       {children}
     </FarmContext.Provider>
   );
