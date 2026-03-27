@@ -1,0 +1,300 @@
+{
+  "versao": "1.1.0",
+  "ultimaAtualizacao": "2026-03-14",
+
+  "categorias": {
+    "herbicidas":  { "label": "Herbicida",   "cor": "#e74c3c", "ordemPadrao": 3 },
+    "adjuvantes":  { "label": "Adjuvante",   "cor": "#9b59b6", "ordemPadrao": 5 },
+    "fungicidas":  { "label": "Fungicida",   "cor": "#3498db", "ordemPadrao": 2 },
+    "inseticidas": { "label": "Inseticida",  "cor": "#e67e22", "ordemPadrao": 3 },
+    "foliares":    { "label": "Foliar",      "cor": "#27ae60", "ordemPadrao": 2 }
+  },
+
+  "ordemFormulacao": {
+    "WP":        1,
+    "WDG":       1,
+    "DF":        1,
+    "SC":        2,
+    "FL":        2,
+    "WG":        2,
+    "EC":        3,
+    "EW":        3,
+    "SL":        3,
+    "CS":        3,
+    "OD":        4,
+    "SE":        4,
+    "adjuvante": 5
+  },
+
+  "regrasCategorias": [
+    {
+      "categorias": ["herbicidas", "foliares"],
+      "nivel": "atencao",
+      "mensagem": "Mistura de herbicidas com foliares pode reduzir a eficiência do foliar e causar fitotoxicidade. Verifique a bula de cada produto antes de misturar."
+    },
+    {
+      "categorias": ["adjuvantes", "adjuvantes"],
+      "nivel": "atencao",
+      "mensagem": "Misturar mais de um adjuvante pode causar excesso de espuma ou redução na cobertura foliar. Use apenas um adjuvante por calda quando possível."
+    }
+  ],
+
+  "regrasProdutos": [
+    {
+      "produtos": ["roundup", "glifosato", "glyphosate", "zapp", "trop"],
+      "incompativel_com": ["sulfato de cobre", "cobre", "calda bordalesa", "oxicloreto"],
+      "nivel": "grave",
+      "mensagem": "Glifosato é incompatível com produtos à base de cobre. O cobre inativa o glifosato, reduzindo drasticamente sua eficácia."
+    },
+    {
+      "produtos": ["2,4-d", "2.4d", "2,4d", "dma"],
+      "incompativel_com": ["glifosato", "roundup", "zapp"],
+      "nivel": "atencao",
+      "mensagem": "2,4-D misturado com glifosato pode causar antagonismo. Prefira aplicação separada ou verifique a bula para formulações registradas em mistura."
+    },
+    {
+      "produtos": ["paraquate", "paraquat", "gramoxone"],
+      "incompativel_com": ["qualquer"],
+      "nivel": "grave",
+      "mensagem": "Paraquate é extremamente incompatível com a maioria dos produtos. Nunca misture paraquate com outros defensivos sem orientação de um engenheiro agrônomo."
+    },
+    {
+      "produtos": ["mancozebe", "mancozeb", "dithane", "unizeb"],
+      "incompativel_com": ["oleo", "óleo", "mineral", "alcalino"],
+      "nivel": "grave",
+      "mensagem": "Mancozebe é incompatível com óleos minerais e produtos alcalinos. Verifique o pH da calda (ideal 5,5–6,5)."
+    },
+    {
+      "produtos": ["cobre", "sulfato de cobre", "oxicloreto", "calda bordalesa", "cuprozeb"],
+      "incompativel_com": ["glifosato", "roundup", "fosfito", "fosfonato"],
+      "nivel": "grave",
+      "mensagem": "Produtos cúpricos são incompatíveis com glifosato e fosfitos. A reação química inativa ambos os produtos."
+    },
+    {
+      "produtos": ["fosfito", "fosfonato", "phytogard", "fitofós"],
+      "incompativel_com": ["cobre", "sulfato de cobre", "oxicloreto"],
+      "nivel": "grave",
+      "mensagem": "Fosfitos reagem com produtos cúpricos, formando precipitado insolúvel e inativando os dois produtos."
+    },
+    {
+      "produtos": ["lambda", "cialotrina", "karate", "warrior"],
+      "incompativel_com": ["captan", "captana", "mancozebe"],
+      "nivel": "grave",
+      "mensagem": "Piretroides (como lambda-cialotrina) são incompatíveis com captana e produtos muito alcalinos."
+    },
+    {
+      "produtos": ["difenoconazol", "score", "dividend"],
+      "incompativel_com": ["oleo", "óleo", "mineral"],
+      "nivel": "atencao",
+      "mensagem": "Difenoconazol misturado com óleos minerais pode aumentar o risco de fitotoxicidade. Reduza a dose e faça teste em área pequena."
+    },
+    {
+      "produtos": ["abamectina", "vertimec", "kraft"],
+      "incompativel_com": ["alcalino", "calda bordalesa", "cobre"],
+      "nivel": "atencao",
+      "mensagem": "Abamectina se degrada em pH acima de 7,5. Acidifique a calda antes de adicionar."
+    },
+    {
+      "produtos": ["clorpirifós", "chlorpyrifos", "lorsban", "klorpan"],
+      "incompativel_com": ["alcalino", "calda bordalesa"],
+      "nivel": "atencao",
+      "mensagem": "Clorpirifós se hidrolisa rapidamente em pH alcalino. Mantenha pH da calda entre 5,0 e 6,5."
+    }
+  ],
+
+  "phCategorias": {
+    "herbicidas":  { "min": 5.0, "max": 6.5, "ideal": 5.5 },
+    "adjuvantes":  { "min": 5.0, "max": 7.0, "ideal": 6.0 },
+    "fungicidas":  { "min": 5.5, "max": 7.0, "ideal": 6.0 },
+    "inseticidas": { "min": 5.0, "max": 6.5, "ideal": 5.5 },
+    "foliares":    { "min": 5.5, "max": 7.0, "ideal": 6.5 }
+  },
+
+  "phProdutos": [
+    { "nome": "glifosato",      "min": 6.0, "max": 7.0, "ideal": 6.5, "obs": "Glifosato perde eficácia em pH abaixo de 5,5 ou acima de 7,5." },
+    { "nome": "roundup",        "min": 6.0, "max": 7.0, "ideal": 6.5, "obs": "Glifosato perde eficácia em pH abaixo de 5,5 ou acima de 7,5." },
+    { "nome": "zapp",           "min": 6.0, "max": 7.0, "ideal": 6.5, "obs": "Glifosato perde eficácia em pH abaixo de 5,5 ou acima de 7,5." },
+    { "nome": "2,4-d",          "min": 4.0, "max": 5.5, "ideal": 5.0, "obs": "2,4-D é mais eficaz em água levemente ácida (pH 4,0–5,5)." },
+    { "nome": "dma",            "min": 4.0, "max": 5.5, "ideal": 5.0, "obs": "2,4-D é mais eficaz em água levemente ácida (pH 4,0–5,5)." },
+    { "nome": "atrazina",       "min": 5.0, "max": 6.0, "ideal": 5.5, "obs": "Atrazina funciona melhor em pH levemente ácido." },
+    { "nome": "mancozebe",      "min": 5.5, "max": 6.5, "ideal": 6.0, "obs": "Mancozebe é instável em pH alcalino — mantenha abaixo de 7,0." },
+    { "nome": "imidacloprido",  "min": 5.0, "max": 7.0, "ideal": 6.0, "obs": "Imidacloprido é estável em ampla faixa de pH." },
+    { "nome": "lambda",         "min": 5.0, "max": 6.5, "ideal": 5.5, "obs": "Piretroides se degradam em pH alcalino — mantenha abaixo de 7,0." },
+    { "nome": "cialotrina",     "min": 5.0, "max": 6.5, "ideal": 5.5, "obs": "Piretroides se degradam em pH alcalino — mantenha abaixo de 7,0." },
+    { "nome": "tebuconazole",   "min": 5.5, "max": 7.0, "ideal": 6.0, "obs": "Triazol — pH neutro a levemente ácido." },
+    { "nome": "azoxistrobina",  "min": 5.5, "max": 7.0, "ideal": 6.0, "obs": "Estrobilurina — pH neutro a levemente ácido." },
+    { "nome": "abamectina",     "min": 5.0, "max": 7.0, "ideal": 6.0, "obs": "Abamectina se degrada rapidamente acima de pH 7,5." },
+    { "nome": "clorpirifós",    "min": 5.0, "max": 6.5, "ideal": 5.5, "obs": "Clorpirifós se hidrolisa em pH alcalino — mantenha entre 5,0 e 6,5." },
+    { "nome": "difenoconazol",  "min": 5.5, "max": 7.0, "ideal": 6.0, "obs": "Difenoconazol — pH neutro a levemente ácido." },
+    { "nome": "epoxiconazol",   "min": 5.5, "max": 7.0, "ideal": 6.0, "obs": "Triazol — pH neutro a levemente ácido." },
+    { "nome": "fluxapiroxade",  "min": 5.5, "max": 7.0, "ideal": 6.0, "obs": "SDHI — estável em pH 5,5–7,0." }
+  ],
+
+  "produtos": [
+    {
+      "nomeComercial": "Roundup Original",
+      "principioAtivo": "glifosato",
+      "categoria": "herbicidas",
+      "formulacao": "SL",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Inibidor de EPSP sintase (Grupo G)",
+      "phMin": 6.0,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Zapp Qi 620",
+      "principioAtivo": "glifosato",
+      "categoria": "herbicidas",
+      "formulacao": "SL",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Inibidor de EPSP sintase (Grupo G)",
+      "phMin": 6.0,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "DMA 806 BR",
+      "principioAtivo": "2,4-D",
+      "categoria": "herbicidas",
+      "formulacao": "SL",
+      "classeToxicologica": "III",
+      "carenciaDias": 30,
+      "modoAcao": "Auxina sintética (Grupo O)",
+      "phMin": 4.0,
+      "phMax": 5.5
+    },
+    {
+      "nomeComercial": "Primóleo",
+      "principioAtivo": "óleo mineral",
+      "categoria": "adjuvantes",
+      "formulacao": "EC",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Adjuvante óleo mineral — melhora penetração foliar",
+      "phMin": 5.0,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Assist",
+      "principioAtivo": "óleo mineral",
+      "categoria": "adjuvantes",
+      "formulacao": "EC",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Adjuvante óleo mineral — melhora penetração e cobertura",
+      "phMin": 5.0,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Nimbus",
+      "principioAtivo": "óleo vegetal metilado",
+      "categoria": "adjuvantes",
+      "formulacao": "EC",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Adjuvante óleo vegetal — aumenta absorção de fungicidas",
+      "phMin": 5.0,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Opera",
+      "principioAtivo": "piraclostrobina + epoxiconazol",
+      "categoria": "fungicidas",
+      "formulacao": "EC",
+      "classeToxicologica": "II",
+      "carenciaDias": 20,
+      "modoAcao": "Inibição da respiração mitocondrial + inibição da biossíntese de ergosterol",
+      "phMin": 5.5,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Fox",
+      "principioAtivo": "trifloxistrobina + protioconazol",
+      "categoria": "fungicidas",
+      "formulacao": "SC",
+      "classeToxicologica": "III",
+      "carenciaDias": 20,
+      "modoAcao": "Estrobilurina + triazolintiona",
+      "phMin": 5.5,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Priori Xtra",
+      "principioAtivo": "azoxistrobina + ciproconazol",
+      "categoria": "fungicidas",
+      "formulacao": "SC",
+      "classeToxicologica": "III",
+      "carenciaDias": 14,
+      "modoAcao": "Estrobilurina + triazol",
+      "phMin": 5.5,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Karate Zeon 50 CS",
+      "principioAtivo": "lambda-cialotrina",
+      "categoria": "inseticidas",
+      "formulacao": "CS",
+      "classeToxicologica": "III",
+      "carenciaDias": 14,
+      "modoAcao": "Piretroide — disruptor de canal de sódio (Grupo 3A)",
+      "phMin": 5.0,
+      "phMax": 6.5
+    },
+    {
+      "nomeComercial": "Engeo Pleno",
+      "principioAtivo": "tiametoxam + lambda-cialotrina",
+      "categoria": "inseticidas",
+      "formulacao": "SC",
+      "classeToxicologica": "II",
+      "carenciaDias": 21,
+      "modoAcao": "Neonicotinoide + piretroide (duplo modo de ação)",
+      "phMin": 5.0,
+      "phMax": 6.5
+    },
+    {
+      "nomeComercial": "Lorsban 480 BR",
+      "principioAtivo": "clorpirifós",
+      "categoria": "inseticidas",
+      "formulacao": "EC",
+      "classeToxicologica": "II",
+      "carenciaDias": 21,
+      "modoAcao": "Organofosforado — inibidor de acetilcolinesterase (Grupo 1B)",
+      "phMin": 5.0,
+      "phMax": 6.5
+    },
+    {
+      "nomeComercial": "Vertimec 18 EC",
+      "principioAtivo": "abamectina",
+      "categoria": "inseticidas",
+      "formulacao": "EC",
+      "classeToxicologica": "I",
+      "carenciaDias": 14,
+      "modoAcao": "Modulador do canal de cloreto (Grupo 6)",
+      "phMin": 5.0,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Boron Foliar",
+      "principioAtivo": "boro",
+      "categoria": "foliares",
+      "formulacao": "SL",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Micronutriente — formação da parede celular",
+      "phMin": 5.5,
+      "phMax": 7.0
+    },
+    {
+      "nomeComercial": "Zinc Foliar",
+      "principioAtivo": "zinco",
+      "categoria": "foliares",
+      "formulacao": "SL",
+      "classeToxicologica": "IV",
+      "carenciaDias": 0,
+      "modoAcao": "Micronutriente — ativação enzimática",
+      "phMin": 5.5,
+      "phMax": 7.0
+    }
+  ]
+}
