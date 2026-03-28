@@ -265,6 +265,7 @@ function ColheitaGraosDetalhe({ talhao, cultura, corCultura, onVoltar }) {
               value={quantidade}
               onChangeText={setQuantidade}
               keyboardType="decimal-pad"
+              thousands
               placeholder="0"
             />
             {calculado && (

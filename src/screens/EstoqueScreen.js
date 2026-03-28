@@ -240,6 +240,7 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
                     value={estoqueMin}
                     onChangeText={setEstoqueMin}
                     keyboardType="decimal-pad"
+                    thousands
                     placeholder="Alerta quando abaixo deste valor"
                   />
                   <Input
@@ -264,6 +265,7 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
                       value={sementesPorSaco}
                       onChangeText={setSementesPorSaco}
                       keyboardType="decimal-pad"
+                      thousands
                       placeholder="Ex: 80000"
                     />
                   )}

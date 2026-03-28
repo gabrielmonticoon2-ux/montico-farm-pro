@@ -33,6 +33,15 @@ const SACO_ADUBO_KG = 50;
 const TONELADA_KG = 1000;
 const ADUBO_UNIDADES = ['kg', 'sc', 't'];
 
+function fmtMil(val) {
+  const s = String(val || '');
+  if (!s) return s;
+  const [i, d] = s.split(',');
+  const fmt = i.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return d !== undefined ? `${fmt},${d}` : fmt;
+}
+function stripMil(text) { return text.replace(/\./g, ''); }
+
 function toKg(valor, unidade) {
   if (unidade === 'sc') return valor * SACO_ADUBO_KG;
   if (unidade === 't')  return valor * TONELADA_KG;
@@ -484,7 +493,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                             })()}
                             <Text style={[styles.fieldLabel, { marginTop: 2 }]}>Qtd. a retirar do estoque</Text>
                             <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                              <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                             </View>
                           </View>
@@ -529,7 +538,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                               </View>
                             ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                               <View style={styles.doseRow}>
-                                <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => atualizarQtdEntradaAdubo(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                <TextInput style={styles.produtoQtdInput} value={fmtMil(p.qtdEntrada || '')} onChangeText={v => atualizarQtdEntradaAdubo(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
                                 <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
                                 {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
                                   <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
@@ -537,7 +546,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                               </View>
                             ) : (
                               <View style={styles.doseRow}>
-                                <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
                                 <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                               </View>
                             )}
@@ -969,7 +978,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                             </View>
                           ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                             <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboVar(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                              <TextInput style={styles.produtoQtdInput} value={fmtMil(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboVar(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
                               {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
                                 <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
@@ -977,7 +986,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                             </View>
                           ) : (
                             <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v } : x))} keyboardType="decimal-pad" placeholder="0" />
+                              <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: stripMil(v) } : x))} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                             </View>
                           )}
@@ -1473,7 +1482,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                                 </View>
                               ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                                 <View style={styles.doseRow}>
-                                  <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboCouve(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                  <TextInput style={styles.produtoQtdInput} value={fmtMil(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboCouve(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
                                   <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
                                   {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
                                     <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
@@ -1481,7 +1490,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                                 </View>
                               ) : (
                                 <View style={styles.doseRow}>
-                                  <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v } : x))} keyboardType="decimal-pad" placeholder="0" />
+                                  <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: stripMil(v) } : x))} keyboardType="decimal-pad" placeholder="0" />
                                   <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                                 </View>
                               )}
