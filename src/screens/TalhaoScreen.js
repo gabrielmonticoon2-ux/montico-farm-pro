@@ -449,7 +449,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} />
+              <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
               <Input label="Descrição" value={descricao} onChangeText={setDescricao} placeholder="Ex: Aplicado Roundup 2 L/ha + Primóleo" multiline />
               {(tipoRegistro === 'aplicacao' || tipoRegistro === 'adubacao' ||
                 (tipoRegistro === 'plantio' && !!CULTURAS_SEMENTES_MAP[cultura.nome])) && (
@@ -925,7 +925,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} />
+              <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
               <Input label="Descrição" value={descricao} onChangeText={setDescricao} placeholder="Descreva o que foi feito" multiline />
               {(tipoRegistro === 'aplicacao' || tipoRegistro === 'adubacao') && (
                 <View style={styles.produtosSection}>
@@ -1405,7 +1405,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} />
+              <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
 
               {tipoRegistro === 'plantio' ? (
                 <>
@@ -1575,7 +1575,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
             <Text style={styles.modalTitulo}>Editar Variedade</Text>
             <Input label="Nome da variedade" value={editNome} onChangeText={setEditNome} placeholder="Ex: Veneza, Manteiga..." autoFocus />
             <Input label="Quantidade de pés" value={editMudas} onChangeText={setEditMudas} keyboardType="number-pad" placeholder="Ex: 5000" />
-            <Input label="Data de plantio (DD/MM/AAAA)" value={editData} onChangeText={t => setEditData(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} />
+            <Input label="Data de plantio (DD/MM/AAAA)" value={editData} onChangeText={t => setEditData(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
             <View style={styles.modalAcoes}>
               <Button label="Cancelar" onPress={() => setEditandoVariedade(null)} variant="secondary" style={{ flex: 1 }} />
               <Button label="Salvar" onPress={salvarEdicaoVariedade} variant="primary" style={{ flex: 1 }} />

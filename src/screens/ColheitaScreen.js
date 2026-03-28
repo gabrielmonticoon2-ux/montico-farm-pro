@@ -247,7 +247,7 @@ function ColheitaGraosDetalhe({ talhao, cultura, corCultura, onVoltar }) {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitulo}>Nova Colheita — {cultura.nome}</Text>
-            <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} />
+            <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
             <Text style={styles.fieldLabel}>Registrar em</Text>
             <View style={styles.unidadeRow}>
               {[{ key: 'sacos', label: 'Sacos (60 kg)' }, { key: 'kg', label: 'Quilogramas' }].map(u => (
@@ -438,7 +438,7 @@ function ColheitaCouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitulo}>Nova Colheita — Couve</Text>
-            <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} />
+            <Input label="Data (DD/MM/AAAA)" value={dataTexto} onChangeText={t => setDataTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
             <Input label="Cabeças de couve" value={cabecas} onChangeText={setCabecas} keyboardType="number-pad" placeholder="Ex: 200" autoFocus />
             <Input label="Fornecedor / Destino" value={fornecedor} onChangeText={setFornecedor} placeholder="Ex: Mercado São Paulo" />
             <Input label="Preço por cabeça (R$)" value={preco} onChangeText={setPreco} keyboardType="decimal-pad" placeholder="Ex: 3,50 (opcional)" />
