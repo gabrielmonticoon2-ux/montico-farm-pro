@@ -54,6 +54,19 @@ function isAduboPesavel(unidade) {
   return ADUBO_UNIDADES.includes(unidade);
 }
 
+function agruparPorCategoria(lista) {
+  const grupos = new Map();
+  for (const p of lista) {
+    const label = p.categoriaLabel
+      || (p.tipo === 'adubo'    ? 'Adubos'
+        : p.tipo === 'semente'  ? 'Sementes'
+        : 'Produtos');
+    if (!grupos.has(label)) grupos.set(label, []);
+    grupos.get(label).push(p);
+  }
+  return [...grupos.entries()];
+}
+
 const CULTURAS_PREDEFINIDAS = [
   { nome: 'Soja',   icone: 'leaf',          cor: '#84CC16' },
   { nome: 'Milho',  icone: 'sunny',         cor: '#F59E0B' },
@@ -584,17 +597,21 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                 <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>
                   Nenhum produto disponível no estoque
                 </Text>
-              ) : getProdutosDisponiveis().map(p => (
-                <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => adicionarProduto(p)}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.produtoPickerNome}>{p.nome}</Text>
-                    {p.categoriaLabel && <Text style={styles.produtoCat}>{p.categoriaLabel}</Text>}
-                  </View>
-                  <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                    <Text style={styles.produtoPickerEstoque}>{p.estoqueAtual} {p.unidade}</Text>
-                    <Ionicons name="add-circle-outline" size={22} color={PRIMARY} />
-                  </View>
-                </TouchableOpacity>
+              ) : agruparPorCategoria(getProdutosDisponiveis()).map(([label, produtos]) => (
+                <View key={label}>
+                  <Text style={styles.pickerSectionHeader}>{label}</Text>
+                  {produtos.map(p => (
+                    <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => adicionarProduto(p)}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.produtoPickerNome}>{p.nome}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                        <Text style={styles.produtoPickerEstoque}>{p.estoqueAtual} {p.unidade}</Text>
+                        <Ionicons name="add-circle-outline" size={22} color={PRIMARY} />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               ))}
             </ScrollView>
           </View>
@@ -894,17 +911,21 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                   lista = adubos.filter(a => !jaAdicionados.has(a.id)).map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0, unidadeEntrada: a.unidade }));
                 }
                 if (lista.length === 0) return <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>Nenhum produto disponível</Text>;
-                return lista.map(p => (
-                  <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => { setProdutosUsados(prev => [...prev, p]); setModalProduto(false); }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.produtoPickerNome}>{p.nome}</Text>
-                      {p.categoriaLabel && <Text style={styles.produtoCat}>{p.categoriaLabel}</Text>}
-                    </View>
-                    <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                      <Text style={styles.produtoPickerEstoque}>{p.estoqueAtual} {p.unidade}</Text>
-                      <Ionicons name="add-circle-outline" size={22} color={PRIMARY} />
-                    </View>
-                  </TouchableOpacity>
+                return agruparPorCategoria(lista).map(([label, produtos]) => (
+                  <View key={label}>
+                    <Text style={styles.pickerSectionHeader}>{label}</Text>
+                    {produtos.map(p => (
+                      <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => { setProdutosUsados(prev => [...prev, p]); setModalProduto(false); }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.produtoPickerNome}>{p.nome}</Text>
+                        </View>
+                        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                          <Text style={styles.produtoPickerEstoque}>{p.estoqueAtual} {p.unidade}</Text>
+                          <Ionicons name="add-circle-outline" size={22} color={PRIMARY} />
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 ));
               })()}
             </ScrollView>
@@ -1335,17 +1356,21 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                   lista = adubos.filter(a => !jaAdicionados.has(a.id)).map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0, unidadeEntrada: a.unidade }));
                 }
                 if (lista.length === 0) return <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>Nenhum produto disponível</Text>;
-                return lista.map(p => (
-                  <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => { setProdutosUsados(prev => [...prev, p]); setModalProduto(false); }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.produtoPickerNome}>{p.nome}</Text>
-                      {p.categoriaLabel && <Text style={styles.produtoCat}>{p.categoriaLabel}</Text>}
-                    </View>
-                    <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                      <Text style={styles.produtoPickerEstoque}>{p.estoqueAtual} {p.unidade}</Text>
-                      <Ionicons name="add-circle-outline" size={22} color={PRIMARY} />
-                    </View>
-                  </TouchableOpacity>
+                return agruparPorCategoria(lista).map(([label, produtos]) => (
+                  <View key={label}>
+                    <Text style={styles.pickerSectionHeader}>{label}</Text>
+                    {produtos.map(p => (
+                      <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => { setProdutosUsados(prev => [...prev, p]); setModalProduto(false); }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.produtoPickerNome}>{p.nome}</Text>
+                        </View>
+                        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                          <Text style={styles.produtoPickerEstoque}>{p.estoqueAtual} {p.unidade}</Text>
+                          <Ionicons name="add-circle-outline" size={22} color={PRIMARY} />
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 ));
               })()}
             </ScrollView>
@@ -1889,6 +1914,12 @@ const styles = StyleSheet.create({
   },
   produtoPickerNome: { fontFamily: 'Inter_500Medium', fontSize: 15, color: '#1A1A1A' },
   produtoPickerEstoque: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#27AE60' },
+  pickerSectionHeader: {
+    fontFamily: 'Inter_700Bold', fontSize: 11, color: '#9CA3AF',
+    textTransform: 'uppercase', letterSpacing: 0.8,
+    paddingTop: 14, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    marginBottom: 2,
+  },
 
   // Toggle kg / sc
   unidadeToggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
