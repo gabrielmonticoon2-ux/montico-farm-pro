@@ -504,8 +504,8 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
 
 function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) {
   const {
-    adicionarRegistroVariedade, atualizarRegistroVariedade, removerRegistroVariedade,
-    atualizarRegistroCultura,
+    adicionarRegistroVariedadeEGeral, atualizarRegistroVariedade, removerRegistroVariedade,
+    atualizarRegistroCultura, removerRegistroCultura,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -534,7 +534,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
     const produtosValidos = produtosUsados
       .filter(p => { const q = parseFloat(String(p.quantidade).replace(',', '.')); return !isNaN(q) && q > 0; })
       .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(',', '.')) }));
-    await adicionarRegistroVariedade(talhao.id, cultura.id, variedade.id, {
+    await adicionarRegistroVariedadeEGeral(talhao.id, cultura.id, variedade.id, variedade.nome, {
       tipo: tipoRegistro, descricao: descricao.trim(), data: dataISO, produtosUsados: produtosValidos, pendente,
     });
     if (!pendente) {
@@ -780,6 +780,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                   }
                 }
                 removerRegistroVariedade(talhao.id, cultura.id, variedade.id, pendingDelete.id);
+                if (reg?.culturaRegistroId) removerRegistroCultura(talhao.id, cultura.id, reg.culturaRegistroId);
                 setPendingDelete(null);
               }}>
                 <Text style={styles.confirmBtnExcluirTxt}>Remover</Text>
@@ -988,7 +989,10 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                     <Text style={styles.registroData}>{formatarData(r.data)}</Text>
                   </View>
                   <Text style={styles.registroDesc}>{r.descricao}</Text>
-                  {r.variedadesAplicadas?.length > 0 && (
+                  {r.variedadeOrigem && (
+                    <Text style={[styles.registroProduto, { marginTop: 2 }]}>Variedade: {r.variedadeOrigem}</Text>
+                  )}
+                  {!r.variedadeOrigem && r.variedadesAplicadas?.length > 0 && (
                     <Text style={[styles.registroProduto, { marginTop: 2 }]}>Variedades: {r.variedadesAplicadas.join(', ')}</Text>
                   )}
                   {r.produtosUsados?.length > 0 && (
