@@ -126,6 +126,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
           id: s.id, nome: s.nome, unidade: s.unidade,
           tipo: 'semente', categoria: catKey,
           quantidade: '', sementesPorMetro: '', estoqueAtual: s.quantidade ?? 0,
+          sementesPorSaco: s.sementesPorSaco || null,
         }));
     }
     return [];
@@ -150,7 +151,17 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
   function removerProdutoUsado(uid) { setProdutosUsados(prev => prev.filter(p => p.uid !== uid)); }
 
   function atualizarSementesPorMetro(uid, valor) {
-    setProdutosUsados(prev => prev.map(p => p.uid !== uid ? p : { ...p, sementesPorMetro: valor }));
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const spm = parseFloat(valor.replace(',', '.'));
+      let quantidade = p.quantidade;
+      if (!isNaN(spm) && spm > 0 && cultura.hectares && p.sementesPorSaco > 0 && p.unidade === 'sc') {
+        const semHa = Math.round(spm * SEMENTE_FATOR_HA);
+        const semTotal = Math.round(semHa * cultura.hectares);
+        quantidade = String(Math.ceil(semTotal / p.sementesPorSaco));
+      }
+      return { ...p, sementesPorMetro: valor, quantidade };
+    }));
   }
 
   async function salvarRegistro() {
@@ -356,10 +367,12 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                               if (!isNaN(spm) && spm > 0) {
                                 const semHa = Math.round(spm * SEMENTE_FATOR_HA);
                                 const semTotal = cultura.hectares ? Math.round(semHa * cultura.hectares) : null;
+                                const sacosNecessarios = (semTotal && p.sementesPorSaco > 0) ? Math.ceil(semTotal / p.sementesPorSaco) : null;
                                 return (
                                   <Text style={styles.sementeCalcInfo}>
                                     {'≈ ' + semHa.toLocaleString('pt-BR') + ' sem/ha'}
-                                    {semTotal ? ('  ·  ' + semTotal.toLocaleString('pt-BR') + ' em ' + cultura.hectares + ' ha') : ''}
+                                    {semTotal ? ('  ·  ' + semTotal.toLocaleString('pt-BR') + ' sem em ' + cultura.hectares + ' ha') : ''}
+                                    {sacosNecessarios ? ('\n≈ ' + sacosNecessarios + ' sc necessários') : ''}
                                   </Text>
                                 );
                               }
