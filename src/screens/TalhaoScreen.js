@@ -178,7 +178,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
           id: s.id, nome: s.nome, unidade: s.unidade,
           tipo: 'semente', categoria: catKey,
           quantidade: '', sementesPorMetro: '', estoqueAtual: s.quantidade ?? 0,
-          sementesPorSaco: s.sementesPorSaco || null,
+          sementesPorSaco: s.sementesPorSaco || null, kgPorBag: s.kgPorBag || null,
         }));
     }
     return [];
@@ -259,7 +259,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
       if (p.uid !== uid) return p;
       const spm = parseFloat(valor.replace(',', '.'));
       let quantidade = p.quantidade;
-      if (!isNaN(spm) && spm > 0 && cultura.hectares && p.sementesPorSaco > 0 && p.unidade === 'sc') {
+      if (!isNaN(spm) && spm > 0 && cultura.hectares && p.sementesPorSaco > 0 && (p.unidade === 'bag' || p.unidade === 'sc')) {
         const semHa = Math.round(spm * SEMENTE_FATOR_HA);
         const semTotal = Math.round(semHa * cultura.hectares);
         quantidade = String(Math.ceil(semTotal / p.sementesPorSaco));
@@ -476,7 +476,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                                   <Text style={styles.sementeCalcInfo}>
                                     {'≈ ' + semHa.toLocaleString('pt-BR') + ' sem/ha'}
                                     {semTotal ? ('  ·  ' + semTotal.toLocaleString('pt-BR') + ' sem em ' + cultura.hectares + ' ha') : ''}
-                                    {sacosNecessarios ? ('\n≈ ' + sacosNecessarios + ' sc necessários') : ''}
+                                    {sacosNecessarios ? ('\n≈ ' + sacosNecessarios + ' bag necessários') : ''}
                                   </Text>
                                 );
                               }

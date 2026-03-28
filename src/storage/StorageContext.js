@@ -334,10 +334,10 @@ export function StorageProvider({ children }) {
 
   // ─── SEMENTES ─────────────────────────────────────────────────────────────
 
-  async function adicionarSemente(categoria, nome, quantidade, unidade = 'sc', sementesPorSaco = null) {
+  async function adicionarSemente(categoria, nome, quantidade, unidade = 'bag', sementesPorSaco = null, kgPorBag = null) {
     await salvarSementes({
       ...sementes,
-      [categoria]: [...sementes[categoria], { id: Date.now().toString(), nome, quantidade, unidade, sementesPorSaco }],
+      [categoria]: [...sementes[categoria], { id: Date.now().toString(), nome, quantidade, unidade, sementesPorSaco, kgPorBag }],
     });
   }
 
@@ -345,11 +345,11 @@ export function StorageProvider({ children }) {
     await salvarSementes({ ...sementes, [categoria]: sementes[categoria].filter(s => s.id !== id) });
   }
 
-  async function atualizarConfigSemente(categoria, id, { estoqueMinimo, custoPorUnidade, sementesPorSaco }) {
+  async function atualizarConfigSemente(categoria, id, { estoqueMinimo, custoPorUnidade, sementesPorSaco, kgPorBag }) {
     await salvarSementes({
       ...sementes,
       [categoria]: sementes[categoria].map(s =>
-        s.id === id ? { ...s, estoqueMinimo, custoPorUnidade, sementesPorSaco } : s
+        s.id === id ? { ...s, estoqueMinimo, custoPorUnidade, sementesPorSaco, kgPorBag } : s
       ),
     });
   }
