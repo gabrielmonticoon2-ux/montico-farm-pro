@@ -505,6 +505,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
 function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) {
   const {
     adicionarRegistroVariedade, atualizarRegistroVariedade, removerRegistroVariedade,
+    atualizarRegistroCultura,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -547,12 +548,39 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
   }
 
   async function confirmarPendenciaVar(r) {
-    const motivo = `${talhao.nome} - Couve/${variedade.nome}`;
-    for (const p of (r.produtosUsados || [])) {
-      if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
-      else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+    if (r.culturaRegistroId) {
+      // Registro veio do geral: só confirma a variedade, sem descontar estoque ainda
+      await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
+
+      // Verifica se TODAS as variedades vinculadas a este registro geral estão confirmadas
+      // (trata a atual como já confirmada, pois o estado ainda não reflete o await acima)
+      const todasConfirmadas = (cultura.variedades || []).every(v =>
+        (v.registros || [])
+          .filter(rv => rv.culturaRegistroId === r.culturaRegistroId)
+          .every(rv => (v.id === variedade.id && rv.id === r.id) ? true : !rv.pendente)
+      );
+
+      if (todasConfirmadas) {
+        // Confirma o registro geral e desconta o estoque uma única vez
+        const registroGeral = (cultura.registros || []).find(rg => rg.id === r.culturaRegistroId);
+        if (registroGeral) {
+          const motivo = `${talhao.nome} - Couve`;
+          for (const p of (registroGeral.produtosUsados || [])) {
+            if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+            else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+          }
+          await atualizarRegistroCultura(talhao.id, cultura.id, r.culturaRegistroId, { pendente: false });
+        }
+      }
+    } else {
+      // Registro criado diretamente na variedade: comportamento original
+      const motivo = `${talhao.nome} - Couve/${variedade.nome}`;
+      for (const p of (r.produtosUsados || [])) {
+        if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+        else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+      }
+      await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
     }
-    await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
   }
 
   const registros = [...(variedade.registros || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
