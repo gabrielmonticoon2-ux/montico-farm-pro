@@ -505,7 +505,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
 function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) {
   const {
     adicionarRegistroVariedadeEGeral, atualizarRegistroVariedade, removerRegistroVariedadeEGeral,
-    atualizarRegistroCultura,
+    confirmarRegistroCulturaEVariedades,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -549,11 +549,8 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
 
   async function confirmarPendenciaVar(r) {
     if (r.culturaRegistroId) {
-      // Registro veio do geral: só confirma a variedade, sem descontar estoque ainda
-      await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
-
-      // Verifica se TODAS as variedades vinculadas a este registro geral estão confirmadas
-      // (trata a atual como já confirmada, pois o estado ainda não reflete o await acima)
+      // Verifica se esta é a ÚLTIMA variedade pendente vinculada ao registro geral
+      // (usando o estado atual, antes de qualquer atualização)
       const todasConfirmadas = (cultura.variedades || []).every(v =>
         (v.registros || [])
           .filter(rv => rv.culturaRegistroId === r.culturaRegistroId)
@@ -561,7 +558,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
       );
 
       if (todasConfirmadas) {
-        // Confirma o registro geral e desconta o estoque uma única vez
+        // Última variedade: descontar estoque e confirmar tudo atomicamente
         const registroGeral = (cultura.registros || []).find(rg => rg.id === r.culturaRegistroId);
         if (registroGeral) {
           const motivo = `${talhao.nome} - Couve`;
@@ -569,8 +566,12 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
             if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
             else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
           }
-          await atualizarRegistroCultura(talhao.id, cultura.id, r.culturaRegistroId, { pendente: false });
         }
+        // Confirma variedade + geral em uma única operação atômica
+        await confirmarRegistroCulturaEVariedades(talhao.id, cultura.id, r.culturaRegistroId);
+      } else {
+        // Ainda há outras variedades pendentes: só confirma esta
+        await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
       }
     } else {
       // Registro criado diretamente na variedade: comportamento original
