@@ -54,6 +54,21 @@ function isAduboPesavel(unidade) {
   return ADUBO_UNIDADES.includes(unidade);
 }
 
+const PICKER_CATEGORIA_CORES = {
+  'Herbicidas':  '#e74c3c',
+  'Fungicidas':  '#3498db',
+  'Inseticidas': '#e67e22',
+  'Adjuvantes':  '#9b59b6',
+  'Foliares':    '#27ae60',
+  'Adubos':      '#2D6A4F',
+  'Sementes':    '#F59E0B',
+  'Produtos':    '#6B7280',
+};
+
+function pickerCatCor(label) {
+  return PICKER_CATEGORIA_CORES[label] || '#6B7280';
+}
+
 function agruparPorCategoria(lista) {
   const grupos = new Map();
   for (const p of lista) {
@@ -599,7 +614,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                 </Text>
               ) : agruparPorCategoria(getProdutosDisponiveis()).map(([label, produtos]) => (
                 <View key={label}>
-                  <Text style={styles.pickerSectionHeader}>{label}</Text>
+                  <Text style={[styles.pickerSectionHeader, { color: pickerCatCor(label), borderBottomColor: pickerCatCor(label) + '33' }]}>{label}</Text>
                   {produtos.map(p => (
                     <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => adicionarProduto(p)}>
                       <View style={{ flex: 1 }}>
@@ -913,7 +928,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                 if (lista.length === 0) return <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>Nenhum produto disponível</Text>;
                 return agruparPorCategoria(lista).map(([label, produtos]) => (
                   <View key={label}>
-                    <Text style={styles.pickerSectionHeader}>{label}</Text>
+                    <Text style={[styles.pickerSectionHeader, { color: pickerCatCor(label), borderBottomColor: pickerCatCor(label) + '33' }]}>{label}</Text>
                     {produtos.map(p => (
                       <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => { setProdutosUsados(prev => [...prev, p]); setModalProduto(false); }}>
                         <View style={{ flex: 1 }}>
@@ -1358,7 +1373,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                 if (lista.length === 0) return <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>Nenhum produto disponível</Text>;
                 return agruparPorCategoria(lista).map(([label, produtos]) => (
                   <View key={label}>
-                    <Text style={styles.pickerSectionHeader}>{label}</Text>
+                    <Text style={[styles.pickerSectionHeader, { color: pickerCatCor(label), borderBottomColor: pickerCatCor(label) + '33' }]}>{label}</Text>
                     {produtos.map(p => (
                       <TouchableOpacity key={p.uid} style={styles.produtoPickerItem} onPress={() => { setProdutosUsados(prev => [...prev, p]); setModalProduto(false); }}>
                         <View style={{ flex: 1 }}>
@@ -1915,9 +1930,9 @@ const styles = StyleSheet.create({
   produtoPickerNome: { fontFamily: 'Inter_500Medium', fontSize: 15, color: '#1A1A1A' },
   produtoPickerEstoque: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#27AE60' },
   pickerSectionHeader: {
-    fontFamily: 'Inter_700Bold', fontSize: 11, color: '#9CA3AF',
+    fontFamily: 'Inter_700Bold', fontSize: 11,
     textTransform: 'uppercase', letterSpacing: 0.8,
-    paddingTop: 14, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    paddingTop: 14, paddingBottom: 4, borderBottomWidth: 1,
     marginBottom: 2,
   },
 
