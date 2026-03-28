@@ -206,6 +206,12 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
     setProdutosUsados(prev => prev.map(p => p.uid === uid ? { ...p, quantidade: valor, dose: '' } : p));
   }
 
+  function atualizarModoEntrada(uid, modo) {
+    setProdutosUsados(prev => prev.map(p =>
+      p.uid === uid ? { ...p, modoEntrada: modo, dose: '', qtdEntrada: '', quantidade: '' } : p
+    ));
+  }
+
   function removerProdutoUsado(uid) { setProdutosUsados(prev => prev.filter(p => p.uid !== uid)); }
 
   function atualizarSementesPorMetro(uid, valor) {
@@ -444,7 +450,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                           </View>
                         ) : (
                           <View style={{ gap: 6 }}>
-                            {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) && (
+                            {p.tipo === 'adubo' && isAduboPesavel(p.unidade) && (
                               <View style={styles.unidadeToggleRow}>
                                 <Text style={styles.unidadeToggleLabel}>Unidade:</Text>
                                 {ADUBO_UNIDADES.map(u => (
@@ -457,14 +463,29 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                                 <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
                               </View>
                             )}
-                            {cultura.hectares ? (
+                            {cultura.hectares && (
+                              <View style={styles.unidadeToggleRow}>
+                                <Text style={styles.unidadeToggleLabel}>Modo:</Text>
+                                <TouchableOpacity
+                                  style={[styles.unidadeToggleBtn, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnAtivo]}
+                                  onPress={() => atualizarModoEntrada(p.uid, 'dose')}>
+                                  <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnTxtAtivo]}>dose/ha</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.unidadeToggleBtn, p.modoEntrada === 'direto' && styles.unidadeToggleBtnAtivo]}
+                                  onPress={() => atualizarModoEntrada(p.uid, 'direto')}>
+                                  <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada === 'direto' && styles.unidadeToggleBtnTxtAtivo]}>qtd direta</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                            {(cultura.hectares && p.modoEntrada !== 'direto') ? (
                               <View style={styles.doseRow}>
                                 <TextInput style={styles.produtoQtdInput} value={String(p.dose || '')} onChangeText={v => atualizarDoseProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
                                 <Text style={styles.doseSep}>{(p.tipo === 'adubo' ? (p.unidadeEntrada || p.unidade) : p.unidade)}/ha  ×  {cultura.hectares} ha</Text>
                                 <Text style={styles.doseTotalLabel}>=</Text>
                                 <Text style={styles.doseTotal}>{p.quantidade || '–'} {p.unidade}</Text>
                               </View>
-                            ) : p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) ? (
+                            ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                               <View style={styles.doseRow}>
                                 <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => atualizarQtdEntradaAdubo(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
                                 <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
