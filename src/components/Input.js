@@ -22,7 +22,7 @@ export default function Input({
   autoCapitalize = 'sentences',
   className = '',
   style,
-  thousands = false,
+  thousands = true,
   ...rest
 }) {
   const [focused, setFocused] = useState(false);

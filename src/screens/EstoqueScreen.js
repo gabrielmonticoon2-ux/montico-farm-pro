@@ -412,7 +412,7 @@ function AdubosSection() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitulo}>Adicionar Adubo</Text>
-            <Input label="NPK (N/P/K)" value={npk} onChangeText={t => setNpk(formatNPK(t))} placeholder="00/00/00" keyboardType="numeric" maxLength={8} />
+            <Input label="NPK (N/P/K)" value={npk} onChangeText={t => setNpk(formatNPK(t))} placeholder="00/00/00" keyboardType="numeric" maxLength={8} thousands={false} />
             <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" thousands placeholder="Ex: 5800" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
             <View style={styles.unidadeRow}>

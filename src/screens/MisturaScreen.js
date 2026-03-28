@@ -564,6 +564,7 @@ export default function MisturaScreen() {
               keyboardType="numbers-and-punctuation"
               maxLength={10}
               autoCapitalize="none"
+              thousands={false}
             />
             <Input
               label="Observação (opcional)"
