@@ -504,8 +504,8 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
 
 function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) {
   const {
-    adicionarRegistroVariedadeEGeral, atualizarRegistroVariedade, removerRegistroVariedade,
-    atualizarRegistroCultura, removerRegistroCultura,
+    adicionarRegistroVariedadeEGeral, atualizarRegistroVariedade, removerRegistroVariedadeEGeral,
+    atualizarRegistroCultura,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -779,8 +779,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                     else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
                   }
                 }
-                removerRegistroVariedade(talhao.id, cultura.id, variedade.id, pendingDelete.id);
-                if (reg?.culturaRegistroId) removerRegistroCultura(talhao.id, cultura.id, reg.culturaRegistroId);
+                removerRegistroVariedadeEGeral(talhao.id, cultura.id, variedade.id, pendingDelete.id, reg?.culturaRegistroId || null);
                 setPendingDelete(null);
               }}>
                 <Text style={styles.confirmBtnExcluirTxt}>Remover</Text>

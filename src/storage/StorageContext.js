@@ -690,6 +690,27 @@ export function StorageProvider({ children }) {
     }));
   }
 
+  // Remove o registro de uma variedade E o registro geral vinculado (culturaRegistroId)
+  async function removerRegistroVariedadeEGeral(talhaoId, culturaId, variedadeId, variedadeRegistroId, culturaRegistroId) {
+    await salvarTalhoes(talhoes.map(t => {
+      if (t.id !== talhaoId) return t;
+      return {
+        ...t,
+        culturas: t.culturas.map(c => {
+          if (c.id !== culturaId) return c;
+          const novosRegistros = culturaRegistroId
+            ? (c.registros || []).filter(r => r.id !== culturaRegistroId)
+            : (c.registros || []);
+          const novasVariedades = (c.variedades || []).map(v => {
+            if (v.id !== variedadeId) return v;
+            return { ...v, registros: (v.registros || []).filter(r => r.id !== variedadeRegistroId) };
+          });
+          return { ...c, registros: novosRegistros, variedades: novasVariedades };
+        }),
+      };
+    }));
+  }
+
   // Remove o registro geral da cultura E os registros replicados nas variedades
   async function removerRegistroCulturaEVariedades(talhaoId, culturaId, registroId) {
     await salvarTalhoes(talhoes.map(t => {
@@ -808,6 +829,7 @@ export function StorageProvider({ children }) {
         adicionarRegistroCultura,
         adicionarRegistroCulturaEVariedades,
         removerRegistroCultura,
+        removerRegistroVariedadeEGeral,
         removerRegistroCulturaEVariedades,
         confirmarRegistroCulturaEVariedades,
         atualizarRegistroCultura,
