@@ -29,6 +29,30 @@ const CORES_CULTURA = ['#27AE60', '#1565C0', '#D97706', '#9B59B6', '#C0392B', '#
 const CULTURAS_SEMENTES_MAP = { 'Milho': 'milho', 'Soja': 'soja', 'Feijão': 'feijao' };
 // Espaçamento entre carreiros: 45 cm → 1 ha = 10000 m² → linhas por ha = 10000/0.45
 const SEMENTE_FATOR_HA = 10000 / 0.45; // ≈ 22222 linhas/ha
+const SACO_ADUBO_KG = 50;
+const TONELADA_KG = 1000;
+const ADUBO_UNIDADES = ['kg', 'sc', 't'];
+
+function toKg(valor, unidade) {
+  if (unidade === 'sc') return valor * SACO_ADUBO_KG;
+  if (unidade === 't')  return valor * TONELADA_KG;
+  return valor; // kg
+}
+
+function fromKg(kg, unidade) {
+  if (unidade === 'sc') return kg / SACO_ADUBO_KG;
+  if (unidade === 't')  return kg / TONELADA_KG;
+  return kg; // kg
+}
+
+function convertToStockUnit(valor, unidadeEntrada, unidadeEstoque) {
+  if (unidadeEntrada === unidadeEstoque) return valor;
+  return +fromKg(toKg(valor, unidadeEntrada), unidadeEstoque).toFixed(4);
+}
+
+function isAduboPesavel(unidade) {
+  return ADUBO_UNIDADES.includes(unidade);
+}
 
 const CULTURAS_PREDEFINIDAS = [
   { nome: 'Soja',   icone: 'leaf',          cor: '#84CC16' },
@@ -114,7 +138,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
     if (tipoRegistro === 'adubacao') {
       return adubos
         .filter(a => !jaAdicionados.has(a.id))
-        .map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0 }));
+        .map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0, unidadeEntrada: a.unidade }));
     }
     if (tipoRegistro === 'plantio') {
       const catKey = CULTURAS_SEMENTES_MAP[cultura.nome];
@@ -139,8 +163,42 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
       if (p.uid !== uid) return p;
       const dose = parseFloat(valor.replace(',', '.'));
       const ha = cultura.hectares;
-      const quantidade = (!isNaN(dose) && dose > 0 && ha) ? String(+(dose * ha).toFixed(2)) : '';
+      let quantidade = '';
+      if (!isNaN(dose) && dose > 0 && ha) {
+        const qtdEntrada = dose * ha;
+        const qtdEstoque = (p.tipo === 'adubo' && (isAduboPesavel(p.unidade)))
+          ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
+          : qtdEntrada;
+        quantidade = String(+qtdEstoque.toFixed(2));
+      }
       return { ...p, dose: valor, quantidade };
+    }));
+  }
+
+  function atualizarUnidadeEntradaProduto(uid, novaUnidadeEntrada) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid || p.tipo !== 'adubo') return p;
+      const dose = parseFloat(String(p.dose || '').replace(',', '.'));
+      const ha = cultura.hectares;
+      let quantidade = p.quantidade;
+      if (!isNaN(dose) && dose > 0 && ha) {
+        quantidade = String(+convertToStockUnit(dose * ha, novaUnidadeEntrada, p.unidade).toFixed(2));
+      } else {
+        const qtdE = parseFloat(String(p.qtdEntrada || '').replace(',', '.'));
+        quantidade = (!isNaN(qtdE) && qtdE > 0) ? String(+convertToStockUnit(qtdE, novaUnidadeEntrada, p.unidade).toFixed(2)) : '';
+      }
+      return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+    }));
+  }
+
+  function atualizarQtdEntradaAdubo(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const qtd = parseFloat(valor.replace(',', '.'));
+      const quantidade = (!isNaN(qtd) && qtd > 0)
+        ? String(+convertToStockUnit(qtd, p.unidadeEntrada || p.unidade, p.unidade).toFixed(2))
+        : '';
+      return { ...p, qtdEntrada: valor, quantidade, dose: '' };
     }));
   }
 
@@ -384,17 +442,42 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                               <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                             </View>
                           </View>
-                        ) : cultura.hectares ? (
-                          <View style={styles.doseRow}>
-                            <TextInput style={styles.produtoQtdInput} value={String(p.dose || '')} onChangeText={v => atualizarDoseProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
-                            <Text style={styles.doseSep}>{p.unidade}/ha  ×  {cultura.hectares} ha</Text>
-                            <Text style={styles.doseTotalLabel}>=</Text>
-                            <Text style={styles.doseTotal}>{p.quantidade || '–'} {p.unidade}</Text>
-                          </View>
                         ) : (
-                          <View style={styles.doseRow}>
-                            <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
-                            <Text style={styles.produtoUnidade}>{p.unidade}</Text>
+                          <View style={{ gap: 6 }}>
+                            {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) && (
+                              <View style={styles.unidadeToggleRow}>
+                                <Text style={styles.unidadeToggleLabel}>Unidade:</Text>
+                                {ADUBO_UNIDADES.map(u => (
+                                  <TouchableOpacity key={u}
+                                    style={[styles.unidadeToggleBtn, (p.unidadeEntrada || p.unidade) === u && styles.unidadeToggleBtnAtivo]}
+                                    onPress={() => atualizarUnidadeEntradaProduto(p.uid, u)}>
+                                    <Text style={[styles.unidadeToggleBtnTxt, (p.unidadeEntrada || p.unidade) === u && styles.unidadeToggleBtnTxtAtivo]}>{u}</Text>
+                                  </TouchableOpacity>
+                                ))}
+                                <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
+                              </View>
+                            )}
+                            {cultura.hectares ? (
+                              <View style={styles.doseRow}>
+                                <TextInput style={styles.produtoQtdInput} value={String(p.dose || '')} onChangeText={v => atualizarDoseProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                <Text style={styles.doseSep}>{(p.tipo === 'adubo' ? (p.unidadeEntrada || p.unidade) : p.unidade)}/ha  ×  {cultura.hectares} ha</Text>
+                                <Text style={styles.doseTotalLabel}>=</Text>
+                                <Text style={styles.doseTotal}>{p.quantidade || '–'} {p.unidade}</Text>
+                              </View>
+                            ) : p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) ? (
+                              <View style={styles.doseRow}>
+                                <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => atualizarQtdEntradaAdubo(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
+                                {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
+                                  <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
+                                )}
+                              </View>
+                            ) : (
+                              <View style={styles.doseRow}>
+                                <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                <Text style={styles.produtoUnidade}>{p.unidade}</Text>
+                              </View>
+                            )}
                           </View>
                         )}
                       </View>
@@ -519,6 +602,28 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
   const [pendente, setPendente]           = useState(false);
 
   const TIPOS_VAR = TIPOS_REGISTRO.filter(t => t.key !== 'plantio');
+
+  function toggleUnidadeAduboDet(uid, novaUnidadeEntrada) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid || p.tipo !== 'adubo') return p;
+      const qtdE = parseFloat(String(p.qtdEntrada || '').replace(',', '.'));
+      const quantidade = (!isNaN(qtdE) && qtdE > 0)
+        ? String(+convertToStockUnit(qtdE, novaUnidadeEntrada, p.unidade).toFixed(2))
+        : '';
+      return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+    }));
+  }
+
+  function setQtdEntradaAduboVar(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const qtd = parseFloat(valor.replace(',', '.'));
+      const quantidade = (!isNaN(qtd) && qtd > 0)
+        ? String(+convertToStockUnit(qtd, p.unidadeEntrada || p.unidade, p.unidade).toFixed(2))
+        : '';
+      return { ...p, qtdEntrada: valor, quantidade };
+    }));
+  }
 
   function abrirModal() {
     setTipoRegistro('aplicacao'); setDescricao(''); setProdutosUsados([]); setPendente(false);
@@ -692,9 +797,34 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                             <Ionicons name="close-circle" size={22} color={DANGER} />
                           </TouchableOpacity>
                         </View>
-                        <View style={styles.doseRow}>
-                          <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v } : x))} keyboardType="decimal-pad" placeholder="0" />
-                          <Text style={styles.produtoUnidade}>{p.unidade}</Text>
+                        <View style={{ gap: 6 }}>
+                          {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) && (
+                            <View style={styles.unidadeToggleRow}>
+                              <Text style={styles.unidadeToggleLabel}>Unidade:</Text>
+                              {ADUBO_UNIDADES.map(u => (
+                                <TouchableOpacity key={u}
+                                  style={[styles.unidadeToggleBtn, (p.unidadeEntrada || p.unidade) === u && styles.unidadeToggleBtnAtivo]}
+                                  onPress={() => toggleUnidadeAduboDet(p.uid, u)}>
+                                  <Text style={[styles.unidadeToggleBtnTxt, (p.unidadeEntrada || p.unidade) === u && styles.unidadeToggleBtnTxtAtivo]}>{u}</Text>
+                                </TouchableOpacity>
+                              ))}
+                              <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
+                            </View>
+                          )}
+                          {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) ? (
+                            <View style={styles.doseRow}>
+                              <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboVar(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                              <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
+                              {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
+                                <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
+                              )}
+                            </View>
+                          ) : (
+                            <View style={styles.doseRow}>
+                              <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v } : x))} keyboardType="decimal-pad" placeholder="0" />
+                              <Text style={styles.produtoUnidade}>{p.unidade}</Text>
+                            </View>
+                          )}
                         </View>
                       </View>
                     </View>
@@ -740,7 +870,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                     }
                   }
                 } else if (tipoRegistro === 'adubacao') {
-                  lista = adubos.filter(a => !jaAdicionados.has(a.id)).map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0 }));
+                  lista = adubos.filter(a => !jaAdicionados.has(a.id)).map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0, unidadeEntrada: a.unidade }));
                 }
                 if (lista.length === 0) return <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>Nenhum produto disponível</Text>;
                 return lista.map(p => (
@@ -835,6 +965,28 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
         onVoltar={() => setVariedadeSelecionada(null)}
       />
     );
+  }
+
+  function toggleUnidadeAduboCouve(uid, novaUnidadeEntrada) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid || p.tipo !== 'adubo') return p;
+      const qtdE = parseFloat(String(p.qtdEntrada || '').replace(',', '.'));
+      const quantidade = (!isNaN(qtdE) && qtdE > 0)
+        ? String(+convertToStockUnit(qtdE, novaUnidadeEntrada, p.unidade).toFixed(2))
+        : '';
+      return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+    }));
+  }
+
+  function setQtdEntradaAduboCouve(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const qtd = parseFloat(valor.replace(',', '.'));
+      const quantidade = (!isNaN(qtd) && qtd > 0)
+        ? String(+convertToStockUnit(qtd, p.unidadeEntrada || p.unidade, p.unidade).toFixed(2))
+        : '';
+      return { ...p, qtdEntrada: valor, quantidade };
+    }));
   }
 
   function abrirModal() {
@@ -1081,9 +1233,34 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                                 <Ionicons name="close-circle" size={22} color={DANGER} />
                               </TouchableOpacity>
                             </View>
-                            <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v } : x))} keyboardType="decimal-pad" placeholder="0" />
-                              <Text style={styles.produtoUnidade}>{p.unidade}</Text>
+                            <View style={{ gap: 6 }}>
+                              {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) && (
+                                <View style={styles.unidadeToggleRow}>
+                                  <Text style={styles.unidadeToggleLabel}>Unidade:</Text>
+                                  {ADUBO_UNIDADES.map(u => (
+                                    <TouchableOpacity key={u}
+                                      style={[styles.unidadeToggleBtn, (p.unidadeEntrada || p.unidade) === u && styles.unidadeToggleBtnAtivo]}
+                                      onPress={() => toggleUnidadeAduboCouve(p.uid, u)}>
+                                      <Text style={[styles.unidadeToggleBtnTxt, (p.unidadeEntrada || p.unidade) === u && styles.unidadeToggleBtnTxtAtivo]}>{u}</Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                  <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
+                                </View>
+                              )}
+                              {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) ? (
+                                <View style={styles.doseRow}>
+                                  <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboCouve(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                  <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
+                                  {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
+                                    <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
+                                  )}
+                                </View>
+                              ) : (
+                                <View style={styles.doseRow}>
+                                  <TextInput style={styles.produtoQtdInput} value={String(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v } : x))} keyboardType="decimal-pad" placeholder="0" />
+                                  <Text style={styles.produtoUnidade}>{p.unidade}</Text>
+                                </View>
+                              )}
                             </View>
                           </View>
                         </View>
@@ -1134,7 +1311,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                     }
                   }
                 } else if (tipoRegistro === 'adubacao') {
-                  lista = adubos.filter(a => !jaAdicionados.has(a.id)).map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0 }));
+                  lista = adubos.filter(a => !jaAdicionados.has(a.id)).map(a => ({ uid: a.id, id: a.id, nome: a.npk, unidade: a.unidade, tipo: 'adubo', quantidade: '', estoqueAtual: a.quantidade ?? 0, unidadeEntrada: a.unidade }));
                 }
                 if (lista.length === 0) return <Text style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 16, fontFamily: 'Inter_400Regular' }}>Nenhum produto disponível</Text>;
                 return lista.map(p => (
@@ -1691,4 +1868,16 @@ const styles = StyleSheet.create({
   },
   produtoPickerNome: { fontFamily: 'Inter_500Medium', fontSize: 15, color: '#1A1A1A' },
   produtoPickerEstoque: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#27AE60' },
+
+  // Toggle kg / sc
+  unidadeToggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  unidadeToggleLabel: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#6B7280' },
+  unidadeToggleBtn: {
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    borderWidth: 1.5, borderColor: '#D1D5DB', backgroundColor: '#fff',
+  },
+  unidadeToggleBtnAtivo: { borderColor: '#2D6A4F', backgroundColor: '#2D6A4F' },
+  unidadeToggleBtnTxt: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#6B7280' },
+  unidadeToggleBtnTxtAtivo: { color: '#fff' },
+  unidadeToggleHint: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#9CA3AF' },
 });
