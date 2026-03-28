@@ -186,20 +186,32 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
 
   function adicionarProduto(produto) { setProdutosUsados(prev => [...prev, produto]); setModalProduto(false); }
 
+  function calcDoseQtd(dose, ha, p) {
+    if (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0) {
+      const qtdEntrada = dose * ha;
+      const qtdEstoque = (p.tipo === 'adubo' && isAduboPesavel(p.unidade))
+        ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
+        : qtdEntrada;
+      return String(+qtdEstoque.toFixed(2));
+    }
+    return '';
+  }
+
   function atualizarDoseProduto(uid, valor) {
     setProdutosUsados(prev => prev.map(p => {
       if (p.uid !== uid) return p;
       const dose = parseFloat(valor.replace(',', '.'));
-      const ha = cultura.hectares;
-      let quantidade = '';
-      if (!isNaN(dose) && dose > 0 && ha) {
-        const qtdEntrada = dose * ha;
-        const qtdEstoque = (p.tipo === 'adubo' && (isAduboPesavel(p.unidade)))
-          ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
-          : qtdEntrada;
-        quantidade = String(+qtdEstoque.toFixed(2));
-      }
-      return { ...p, dose: valor, quantidade };
+      const ha = cultura.hectares || parseFloat(String(p.haEntrada || '').replace(',', '.'));
+      return { ...p, dose: valor, quantidade: calcDoseQtd(dose, ha, p) };
+    }));
+  }
+
+  function atualizarHaEntradaProduto(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const ha = parseFloat(valor.replace(',', '.'));
+      const dose = parseFloat(String(p.dose || '').replace(',', '.'));
+      return { ...p, haEntrada: valor, quantidade: calcDoseQtd(dose, ha, p) };
     }));
   }
 
@@ -207,9 +219,9 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
     setProdutosUsados(prev => prev.map(p => {
       if (p.uid !== uid || p.tipo !== 'adubo') return p;
       const dose = parseFloat(String(p.dose || '').replace(',', '.'));
-      const ha = cultura.hectares;
+      const ha = cultura.hectares || parseFloat(String(p.haEntrada || '').replace(',', '.'));
       let quantidade = p.quantidade;
-      if (!isNaN(dose) && dose > 0 && ha) {
+      if (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0) {
         quantidade = String(+convertToStockUnit(dose * ha, novaUnidadeEntrada, p.unidade).toFixed(2));
       } else {
         const qtdE = parseFloat(String(p.qtdEntrada || '').replace(',', '.'));
@@ -491,25 +503,27 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                                 <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
                               </View>
                             )}
-                            {cultura.hectares && (
-                              <View style={styles.unidadeToggleRow}>
-                                <Text style={styles.unidadeToggleLabel}>Modo:</Text>
-                                <TouchableOpacity
-                                  style={[styles.unidadeToggleBtn, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnAtivo]}
-                                  onPress={() => atualizarModoEntrada(p.uid, 'dose')}>
-                                  <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnTxtAtivo]}>dose/ha</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                  style={[styles.unidadeToggleBtn, p.modoEntrada === 'direto' && styles.unidadeToggleBtnAtivo]}
-                                  onPress={() => atualizarModoEntrada(p.uid, 'direto')}>
-                                  <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada === 'direto' && styles.unidadeToggleBtnTxtAtivo]}>qtd direta</Text>
-                                </TouchableOpacity>
-                              </View>
-                            )}
-                            {(cultura.hectares && p.modoEntrada !== 'direto') ? (
+                            <View style={styles.unidadeToggleRow}>
+                              <Text style={styles.unidadeToggleLabel}>Modo:</Text>
+                              <TouchableOpacity
+                                style={[styles.unidadeToggleBtn, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnAtivo]}
+                                onPress={() => atualizarModoEntrada(p.uid, 'dose')}>
+                                <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnTxtAtivo]}>dose/ha</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[styles.unidadeToggleBtn, p.modoEntrada === 'direto' && styles.unidadeToggleBtnAtivo]}
+                                onPress={() => atualizarModoEntrada(p.uid, 'direto')}>
+                                <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada === 'direto' && styles.unidadeToggleBtnTxtAtivo]}>qtd direta</Text>
+                              </TouchableOpacity>
+                            </View>
+                            {p.modoEntrada !== 'direto' ? (
                               <View style={styles.doseRow}>
                                 <TextInput style={styles.produtoQtdInput} value={String(p.dose || '')} onChangeText={v => atualizarDoseProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
-                                <Text style={styles.doseSep}>{(p.tipo === 'adubo' ? (p.unidadeEntrada || p.unidade) : p.unidade)}/ha  ×  {cultura.hectares} ha</Text>
+                                <Text style={styles.doseSep}>{(p.tipo === 'adubo' ? (p.unidadeEntrada || p.unidade) : p.unidade)}/ha ×</Text>
+                                {cultura.hectares
+                                  ? <Text style={styles.doseSep}>{cultura.hectares} ha</Text>
+                                  : <TextInput style={[styles.produtoQtdInput, { width: 52 }]} value={String(p.haEntrada || '')} onChangeText={v => atualizarHaEntradaProduto(p.uid, v)} keyboardType="decimal-pad" placeholder="ha" />
+                                }
                                 <Text style={styles.doseTotalLabel}>=</Text>
                                 <Text style={styles.doseTotal}>{p.quantidade || '–'} {p.unidade}</Text>
                               </View>
@@ -661,11 +675,55 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
   function toggleUnidadeAduboDet(uid, novaUnidadeEntrada) {
     setProdutosUsados(prev => prev.map(p => {
       if (p.uid !== uid || p.tipo !== 'adubo') return p;
+      if (p.modoEntrada !== 'direto') {
+        const dose = parseFloat(String(p.dose || '').replace(',', '.'));
+        const ha = parseFloat(String(p.haEntrada || '').replace(',', '.'));
+        const quantidade = (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0)
+          ? String(+convertToStockUnit(dose * ha, novaUnidadeEntrada, p.unidade).toFixed(2))
+          : '';
+        return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+      }
       const qtdE = parseFloat(String(p.qtdEntrada || '').replace(',', '.'));
       const quantidade = (!isNaN(qtdE) && qtdE > 0)
         ? String(+convertToStockUnit(qtdE, novaUnidadeEntrada, p.unidade).toFixed(2))
         : '';
       return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+    }));
+  }
+
+  function setModoEntradaVar(uid, modo) {
+    setProdutosUsados(prev => prev.map(p =>
+      p.uid === uid ? { ...p, modoEntrada: modo, dose: '', haEntrada: '', qtdEntrada: '', quantidade: '' } : p
+    ));
+  }
+
+  function atualizarDoseProdutoVar(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const dose = parseFloat(valor.replace(',', '.'));
+      const ha = parseFloat(String(p.haEntrada || '').replace(',', '.'));
+      const qtdEntrada = (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0) ? dose * ha : 0;
+      const quantidade = qtdEntrada > 0
+        ? String(+(p.tipo === 'adubo' && isAduboPesavel(p.unidade)
+            ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
+            : qtdEntrada).toFixed(2))
+        : '';
+      return { ...p, dose: valor, quantidade };
+    }));
+  }
+
+  function atualizarHaEntradaVar(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const ha = parseFloat(valor.replace(',', '.'));
+      const dose = parseFloat(String(p.dose || '').replace(',', '.'));
+      const qtdEntrada = (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0) ? dose * ha : 0;
+      const quantidade = qtdEntrada > 0
+        ? String(+(p.tipo === 'adubo' && isAduboPesavel(p.unidade)
+            ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
+            : qtdEntrada).toFixed(2))
+        : '';
+      return { ...p, haEntrada: valor, quantidade };
     }));
   }
 
@@ -876,7 +934,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                           </TouchableOpacity>
                         </View>
                         <View style={{ gap: 6 }}>
-                          {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) && (
+                          {p.tipo === 'adubo' && isAduboPesavel(p.unidade) && (
                             <View style={styles.unidadeToggleRow}>
                               <Text style={styles.unidadeToggleLabel}>Unidade:</Text>
                               {ADUBO_UNIDADES.map(u => (
@@ -889,7 +947,27 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                               <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
                             </View>
                           )}
-                          {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) ? (
+                          <View style={styles.unidadeToggleRow}>
+                            <Text style={styles.unidadeToggleLabel}>Modo:</Text>
+                            <TouchableOpacity
+                              style={[styles.unidadeToggleBtn, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnAtivo]}
+                              onPress={() => setModoEntradaVar(p.uid, 'dose')}>
+                              <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnTxtAtivo]}>dose/ha</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.unidadeToggleBtn, p.modoEntrada === 'direto' && styles.unidadeToggleBtnAtivo]}
+                              onPress={() => setModoEntradaVar(p.uid, 'direto')}>
+                              <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada === 'direto' && styles.unidadeToggleBtnTxtAtivo]}>qtd direta</Text>
+                            </TouchableOpacity>
+                          </View>
+                          {p.modoEntrada !== 'direto' ? (
+                            <View style={styles.doseRow}>
+                              <TextInput style={styles.produtoQtdInput} value={String(p.dose || '')} onChangeText={v => atualizarDoseProdutoVar(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                              <Text style={styles.doseSep}>{(p.tipo === 'adubo' ? (p.unidadeEntrada || p.unidade) : p.unidade)}/ha ×</Text>
+                              <TextInput style={[styles.produtoQtdInput, { width: 52 }]} value={String(p.haEntrada || '')} onChangeText={v => atualizarHaEntradaVar(p.uid, v)} keyboardType="decimal-pad" placeholder="ha" />
+                              <Text style={styles.doseTotalLabel}>= {p.quantidade || '–'} {p.unidade}</Text>
+                            </View>
+                          ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                             <View style={styles.doseRow}>
                               <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboVar(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
@@ -1052,11 +1130,55 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
   function toggleUnidadeAduboCouve(uid, novaUnidadeEntrada) {
     setProdutosUsados(prev => prev.map(p => {
       if (p.uid !== uid || p.tipo !== 'adubo') return p;
+      if (p.modoEntrada !== 'direto') {
+        const dose = parseFloat(String(p.dose || '').replace(',', '.'));
+        const ha = parseFloat(String(p.haEntrada || '').replace(',', '.'));
+        const quantidade = (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0)
+          ? String(+convertToStockUnit(dose * ha, novaUnidadeEntrada, p.unidade).toFixed(2))
+          : '';
+        return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+      }
       const qtdE = parseFloat(String(p.qtdEntrada || '').replace(',', '.'));
       const quantidade = (!isNaN(qtdE) && qtdE > 0)
         ? String(+convertToStockUnit(qtdE, novaUnidadeEntrada, p.unidade).toFixed(2))
         : '';
       return { ...p, unidadeEntrada: novaUnidadeEntrada, quantidade };
+    }));
+  }
+
+  function setModoEntradaCouve(uid, modo) {
+    setProdutosUsados(prev => prev.map(p =>
+      p.uid === uid ? { ...p, modoEntrada: modo, dose: '', haEntrada: '', qtdEntrada: '', quantidade: '' } : p
+    ));
+  }
+
+  function atualizarDoseProdutoCouve(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const dose = parseFloat(valor.replace(',', '.'));
+      const ha = parseFloat(String(p.haEntrada || '').replace(',', '.'));
+      const qtdEntrada = (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0) ? dose * ha : 0;
+      const quantidade = qtdEntrada > 0
+        ? String(+(p.tipo === 'adubo' && isAduboPesavel(p.unidade)
+            ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
+            : qtdEntrada).toFixed(2))
+        : '';
+      return { ...p, dose: valor, quantidade };
+    }));
+  }
+
+  function atualizarHaEntradaCouve(uid, valor) {
+    setProdutosUsados(prev => prev.map(p => {
+      if (p.uid !== uid) return p;
+      const ha = parseFloat(valor.replace(',', '.'));
+      const dose = parseFloat(String(p.dose || '').replace(',', '.'));
+      const qtdEntrada = (!isNaN(dose) && dose > 0 && !isNaN(ha) && ha > 0) ? dose * ha : 0;
+      const quantidade = qtdEntrada > 0
+        ? String(+(p.tipo === 'adubo' && isAduboPesavel(p.unidade)
+            ? convertToStockUnit(qtdEntrada, p.unidadeEntrada || p.unidade, p.unidade)
+            : qtdEntrada).toFixed(2))
+        : '';
+      return { ...p, haEntrada: valor, quantidade };
     }));
   }
 
@@ -1316,7 +1438,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                               </TouchableOpacity>
                             </View>
                             <View style={{ gap: 6 }}>
-                              {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) && (
+                              {p.tipo === 'adubo' && isAduboPesavel(p.unidade) && (
                                 <View style={styles.unidadeToggleRow}>
                                   <Text style={styles.unidadeToggleLabel}>Unidade:</Text>
                                   {ADUBO_UNIDADES.map(u => (
@@ -1329,7 +1451,27 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                                   <Text style={styles.unidadeToggleHint}>1 t = 20 sc = 1000 kg</Text>
                                 </View>
                               )}
-                              {p.tipo === 'adubo' && (isAduboPesavel(p.unidade)) ? (
+                              <View style={styles.unidadeToggleRow}>
+                                <Text style={styles.unidadeToggleLabel}>Modo:</Text>
+                                <TouchableOpacity
+                                  style={[styles.unidadeToggleBtn, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnAtivo]}
+                                  onPress={() => setModoEntradaCouve(p.uid, 'dose')}>
+                                  <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada !== 'direto' && styles.unidadeToggleBtnTxtAtivo]}>dose/ha</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.unidadeToggleBtn, p.modoEntrada === 'direto' && styles.unidadeToggleBtnAtivo]}
+                                  onPress={() => setModoEntradaCouve(p.uid, 'direto')}>
+                                  <Text style={[styles.unidadeToggleBtnTxt, p.modoEntrada === 'direto' && styles.unidadeToggleBtnTxtAtivo]}>qtd direta</Text>
+                                </TouchableOpacity>
+                              </View>
+                              {p.modoEntrada !== 'direto' ? (
+                                <View style={styles.doseRow}>
+                                  <TextInput style={styles.produtoQtdInput} value={String(p.dose || '')} onChangeText={v => atualizarDoseProdutoCouve(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
+                                  <Text style={styles.doseSep}>{(p.tipo === 'adubo' ? (p.unidadeEntrada || p.unidade) : p.unidade)}/ha ×</Text>
+                                  <TextInput style={[styles.produtoQtdInput, { width: 52 }]} value={String(p.haEntrada || '')} onChangeText={v => atualizarHaEntradaCouve(p.uid, v)} keyboardType="decimal-pad" placeholder="ha" />
+                                  <Text style={styles.doseTotalLabel}>= {p.quantidade || '–'} {p.unidade}</Text>
+                                </View>
+                              ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                                 <View style={styles.doseRow}>
                                   <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboCouve(p.uid, v)} keyboardType="decimal-pad" placeholder="0" />
                                   <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
