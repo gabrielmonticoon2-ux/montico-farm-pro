@@ -847,6 +847,10 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
         nome: variedadeNome.trim(), mudas: isNaN(m) || m <= 0 ? null : m, dataPlantio: dataISO,
       });
     } else {
+      if (variedades.length > 0 && variedadesSel.length === 0) {
+        Alert.alert('Selecione ao menos uma variedade', 'O registro deve estar vinculado a uma variedade.');
+        return;
+      }
       const produtosValidos = produtosUsados
         .filter(p => { const q = parseFloat(String(p.quantidade).replace(',', '.')); return !isNaN(q) && q > 0; })
         .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(',', '.')) }));
