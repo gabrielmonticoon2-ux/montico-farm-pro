@@ -798,7 +798,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
 function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
   const {
     atualizarMudasCultura, adicionarVariedadeCouve, atualizarVariedadeCouve, removerVariedadeCouve,
-    adicionarRegistroCultura, adicionarRegistroCulturaEVariedades, removerRegistroCulturaEVariedades, atualizarRegistroCultura,
+    adicionarRegistroCultura, adicionarRegistroCulturaEVariedades, removerRegistroCulturaEVariedades, atualizarRegistroCultura, confirmarRegistroCulturaEVariedades,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -906,7 +906,8 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
       if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
       else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
     }
-    await atualizarRegistroCultura(talhao.id, cultura.id, r.id, { pendente: false });
+    // Confirma o registro geral E todos os registros vinculados nas variedades atomicamente
+    await confirmarRegistroCulturaEVariedades(talhao.id, cultura.id, r.id);
   }
 
   const registros = [...(cultura.registros || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
