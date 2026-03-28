@@ -5,6 +5,13 @@ import { View, Text, TextInput, StyleSheet } from 'react-native';
  * Input com label acima e borda de foco dinâmica.
  * Altura mínima 52px para uso em campo.
  */
+function formatThousands(raw) {
+  if (!raw) return raw;
+  const [intPart, decPart] = raw.split(',');
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decPart !== undefined ? `${formatted},${decPart}` : formatted;
+}
+
 export default function Input({
   label,
   value,
@@ -15,9 +22,16 @@ export default function Input({
   autoCapitalize = 'sentences',
   className = '',
   style,
+  thousands = false,
   ...rest
 }) {
   const [focused, setFocused] = useState(false);
+
+  function handleChangeText(text) {
+    if (!thousands) { onChangeText(text); return; }
+    const raw = text.replace(/\./g, '');
+    onChangeText(raw);
+  }
 
   return (
     <View className={`gap-1 ${className}`}>
@@ -29,8 +43,8 @@ export default function Input({
           focused ? 'border-primary-light' : 'border-gray-200'
         }`}
         style={[styles.minHeight, multiline && styles.multiline, style]}
-        value={value}
-        onChangeText={onChangeText}
+        value={thousands ? formatThousands(value) : value}
+        onChangeText={handleChangeText}
         placeholder={placeholder}
         placeholderTextColor="#9CA3AF"
         keyboardType={keyboardType}

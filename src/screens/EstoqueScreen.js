@@ -199,6 +199,7 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
                     value={qtdMov}
                     onChangeText={setQtdMov}
                     keyboardType="decimal-pad"
+                    thousands
                     placeholder="0"
                   />
                   <Input
@@ -410,7 +411,7 @@ function AdubosSection() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitulo}>Adicionar Adubo</Text>
             <Input label="NPK (N/P/K)" value={npk} onChangeText={t => setNpk(formatNPK(t))} placeholder="00/00/00" keyboardType="numeric" maxLength={8} />
-            <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" placeholder="Ex: 5800" />
+            <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" thousands placeholder="Ex: 5800" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
             <View style={styles.unidadeRow}>
               {['kg', 'sc', 't'].map(u => (
@@ -569,7 +570,7 @@ function LiquidosSection() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitulo}>Adicionar {catInfo.label.slice(0, -1)}</Text>
             <Input label="Nome do produto" value={nome} onChangeText={setNome} placeholder="Ex: Roundup" />
-            <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" placeholder="Ex: 160" />
+            <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" thousands placeholder="Ex: 160" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
             <View style={styles.unidadeRow}>
               {['L', 'kg'].map(u => (
@@ -712,7 +713,7 @@ function SementesSection() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitulo}>Adicionar {catInfo.labelSingular}</Text>
             <Input label="Cultivar / Variedade" value={nome} onChangeText={setNome} placeholder="Ex: DKB 290, Intacta RR2" />
-            <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" placeholder="Ex: 50" />
+            <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" thousands placeholder="Ex: 50" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
             <View style={styles.unidadeRow}>
               {['bag', 'kg'].map(u => (
