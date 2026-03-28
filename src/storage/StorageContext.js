@@ -638,8 +638,28 @@ export function StorageProvider({ children }) {
           const novosRegistros = [{ id: novoId, ...registro }, ...(c.registros || [])];
           const novasVariedades = (c.variedades || []).map((v, vi) => {
             if (!nomesVariedades.includes(v.nome)) return v;
-            return { ...v, registros: [{ id: `${novoId}_v${vi}`, ...registro }, ...(v.registros || [])] };
+            // culturaRegistroId permite encontrar e apagar estes registros ao apagar o geral
+            return { ...v, registros: [{ id: `${novoId}_v${vi}`, culturaRegistroId: novoId, ...registro }, ...(v.registros || [])] };
           });
+          return { ...c, registros: novosRegistros, variedades: novasVariedades };
+        }),
+      };
+    }));
+  }
+
+  // Remove o registro geral da cultura E os registros replicados nas variedades
+  async function removerRegistroCulturaEVariedades(talhaoId, culturaId, registroId) {
+    await salvarTalhoes(talhoes.map(t => {
+      if (t.id !== talhaoId) return t;
+      return {
+        ...t,
+        culturas: t.culturas.map(c => {
+          if (c.id !== culturaId) return c;
+          const novosRegistros = (c.registros || []).filter(r => r.id !== registroId);
+          const novasVariedades = (c.variedades || []).map(v => ({
+            ...v,
+            registros: (v.registros || []).filter(r => r.culturaRegistroId !== registroId),
+          }));
           return { ...c, registros: novosRegistros, variedades: novasVariedades };
         }),
       };
@@ -744,6 +764,7 @@ export function StorageProvider({ children }) {
         adicionarRegistroCultura,
         adicionarRegistroCulturaEVariedades,
         removerRegistroCultura,
+        removerRegistroCulturaEVariedades,
         atualizarRegistroCultura,
         exportarDados,
       }}
