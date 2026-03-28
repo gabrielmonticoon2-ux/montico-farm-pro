@@ -769,7 +769,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
 function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
   const {
     atualizarMudasCultura, adicionarVariedadeCouve, atualizarVariedadeCouve, removerVariedadeCouve,
-    adicionarRegistroCultura, adicionarRegistroCulturaEVariedades, removerRegistroCultura, atualizarRegistroCultura,
+    adicionarRegistroCultura, adicionarRegistroCulturaEVariedades, removerRegistroCulturaEVariedades, atualizarRegistroCultura,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -1155,7 +1155,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                       else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
                     }
                   }
-                  removerRegistroCultura(talhao.id, cultura.id, pendingDelete.id);
+                  removerRegistroCulturaEVariedades(talhao.id, cultura.id, pendingDelete.id);
                 }
                 setPendingDelete(null);
               }}>
