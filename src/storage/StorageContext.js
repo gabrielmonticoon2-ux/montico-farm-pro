@@ -477,6 +477,26 @@ export function StorageProvider({ children }) {
     }));
   }
 
+  // Salva o registro na variedade E no geral da cultura atomicamente
+  async function adicionarRegistroVariedadeEGeral(talhaoId, culturaId, variedadeId, variedadeNome, registro) {
+    const novoId = Date.now().toString();
+    await salvarTalhoes(talhoes.map(t => {
+      if (t.id !== talhaoId) return t;
+      return {
+        ...t,
+        culturas: t.culturas.map(c => {
+          if (c.id !== culturaId) return c;
+          const novoRegistroGeral = { id: novoId, ...registro, variedadeOrigem: variedadeNome };
+          const novasVariedades = (c.variedades || []).map(v => {
+            if (v.id !== variedadeId) return v;
+            return { ...v, registros: [{ id: `${novoId}_var`, culturaRegistroId: novoId, ...registro }, ...(v.registros || [])] };
+          });
+          return { ...c, registros: [novoRegistroGeral, ...(c.registros || [])], variedades: novasVariedades };
+        }),
+      };
+    }));
+  }
+
   async function atualizarRegistroVariedade(talhaoId, culturaId, variedadeId, registroId, dados) {
     await salvarTalhoes(talhoes.map(t => {
       if (t.id !== talhaoId) return t;
@@ -752,6 +772,7 @@ export function StorageProvider({ children }) {
         atualizarVariedadeCouve,
         removerVariedadeCouve,
         adicionarRegistroVariedade,
+        adicionarRegistroVariedadeEGeral,
         atualizarRegistroVariedade,
         removerRegistroVariedade,
         adicionarRegistroColheita,
