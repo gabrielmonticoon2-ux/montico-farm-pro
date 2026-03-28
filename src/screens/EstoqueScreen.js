@@ -57,13 +57,14 @@ function MetricChip({ label, value, cor }) {
 
 // ─── Modal de detalhe ────────────────────────────────────────────────────────
 
-function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovimentacao, onSalvarConfig }) {
+function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovimentacao, onSalvarConfig, isSemente }) {
   const [aba, setAba] = useState('historico');
   const [tipoMov, setTipoMov] = useState('entrada');
   const [qtdMov, setQtdMov] = useState('');
   const [motivoMov, setMotivoMov] = useState('');
   const [estoqueMin, setEstoqueMin] = useState('');
   const [custo, setCusto] = useState('');
+  const [sementesPorSaco, setSementesPorSaco] = useState('');
 
   function aoAbrir() {
     setAba('historico');
@@ -72,6 +73,7 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
     setTipoMov('entrada');
     setEstoqueMin(item?.estoqueMinimo != null ? String(item.estoqueMinimo) : '');
     setCusto(item?.custoPorUnidade != null ? String(item.custoPorUnidade) : '');
+    setSementesPorSaco(item?.sementesPorSaco != null ? String(item.sementesPorSaco) : '');
   }
 
   function salvarMovimentacao() {
@@ -88,10 +90,15 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
   function salvarConfig() {
     const min = parseFloat(estoqueMin.replace(',', '.'));
     const cst = parseFloat(custo.replace(',', '.'));
-    onSalvarConfig({
+    const cfg = {
       estoqueMinimo: isNaN(min) || min <= 0 ? null : min,
       custoPorUnidade: isNaN(cst) || cst <= 0 ? null : cst,
-    });
+    };
+    if (isSemente) {
+      const spc = parseFloat(sementesPorSaco.replace(',', '.'));
+      cfg.sementesPorSaco = (!isNaN(spc) && spc > 0) ? spc : null;
+    }
+    onSalvarConfig(cfg);
     Alert.alert('Salvo', 'Configurações atualizadas.');
   }
 
@@ -237,6 +244,15 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
                     keyboardType="decimal-pad"
                     placeholder="Ex: 3,50"
                   />
+                  {isSemente && item.unidade === 'sc' && (
+                    <Input
+                      label="Sementes por saco"
+                      value={sementesPorSaco}
+                      onChangeText={setSementesPorSaco}
+                      keyboardType="decimal-pad"
+                      placeholder="Ex: 80000"
+                    />
+                  )}
                   {item.custoPorUnidade && item.quantidade ? (
                     <Card style={styles.custoPreview}>
                       <Text style={styles.custoPreviewTxt}>
@@ -590,12 +606,13 @@ function SementesSection() {
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [unidade, setUnidade] = useState('sc');
+  const [sementesPorSaco, setSementesPorSaco] = useState('');
   const [pendingDelete, setPendingDelete] = useState(null);
 
   const catInfo = CATEGORIAS_SEMENTES.find(c => c.key === catAtiva);
   const produtos = sementes[catAtiva] || [];
 
-  function abrirAdd() { setNome(''); setQuantidade(''); setUnidade('sc'); setModalAdd(true); }
+  function abrirAdd() { setNome(''); setQuantidade(''); setUnidade('sc'); setSementesPorSaco(''); setModalAdd(true); }
 
   async function salvar() {
     const nomeTrim = nome.trim();
@@ -604,7 +621,8 @@ function SementesSection() {
       Alert.alert('Dados inválidos', 'Informe o nome e a quantidade.');
       return;
     }
-    await adicionarSemente(catAtiva, nomeTrim, qtd, unidade);
+    const spc = parseFloat(sementesPorSaco.replace(',', '.'));
+    await adicionarSemente(catAtiva, nomeTrim, qtd, unidade, (!isNaN(spc) && spc > 0) ? spc : null);
     setModalAdd(false);
   }
 
@@ -692,6 +710,15 @@ function SementesSection() {
                 </TouchableOpacity>
               ))}
             </View>
+            {unidade === 'sc' && (
+              <Input
+                label="Sementes por saco (opcional)"
+                value={sementesPorSaco}
+                onChangeText={setSementesPorSaco}
+                keyboardType="decimal-pad"
+                placeholder="Ex: 80000"
+              />
+            )}
             <View style={styles.modalAcoes}>
               <Button label="Cancelar" onPress={() => setModalAdd(false)} variant="secondary" style={{ flex: 1 }} />
               <Button label="Salvar" onPress={salvar} variant="primary" style={{ flex: 1 }} />
@@ -703,6 +730,7 @@ function SementesSection() {
       <ModalDetalhe
         visivel={!!itemAtual}
         item={itemAtual}
+        isSemente
         corCategoria={catInfo.cor}
         onFechar={() => setModalDetalhe(null)}
         onMovimentacao={mov => adicionarMovimentacaoSemente(catAtiva, modalDetalhe.id, mov)}
