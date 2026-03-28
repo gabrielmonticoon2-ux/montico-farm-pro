@@ -65,6 +65,7 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
   const [estoqueMin, setEstoqueMin] = useState('');
   const [custo, setCusto] = useState('');
   const [sementesPorSaco, setSementesPorSaco] = useState('');
+  const [kgPorBag, setKgPorBag] = useState('');
 
   function aoAbrir() {
     setAba('historico');
@@ -74,6 +75,7 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
     setEstoqueMin(item?.estoqueMinimo != null ? String(item.estoqueMinimo) : '');
     setCusto(item?.custoPorUnidade != null ? String(item.custoPorUnidade) : '');
     setSementesPorSaco(item?.sementesPorSaco != null ? String(item.sementesPorSaco) : '');
+    setKgPorBag(item?.kgPorBag != null ? String(item.kgPorBag) : '');
   }
 
   function salvarMovimentacao() {
@@ -97,6 +99,8 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
     if (isSemente) {
       const spc = parseFloat(sementesPorSaco.replace(',', '.'));
       cfg.sementesPorSaco = (!isNaN(spc) && spc > 0) ? spc : null;
+      const kpb = parseFloat(kgPorBag.replace(',', '.'));
+      cfg.kgPorBag = (!isNaN(kpb) && kpb > 0) ? kpb : null;
     }
     onSalvarConfig(cfg);
     Alert.alert('Salvo', 'Configurações atualizadas.');
@@ -244,9 +248,18 @@ function ModalDetalhe({ visivel, item, corCategoria = PRIMARY, onFechar, onMovim
                     keyboardType="decimal-pad"
                     placeholder="Ex: 3,50"
                   />
-                  {isSemente && item.unidade === 'sc' && (
+                  {isSemente && (item.unidade === 'bag' || item.unidade === 'sc') && (
                     <Input
-                      label="Sementes por saco"
+                      label="kg por bag"
+                      value={kgPorBag}
+                      onChangeText={setKgPorBag}
+                      keyboardType="decimal-pad"
+                      placeholder="Padrão: 1000"
+                    />
+                  )}
+                  {isSemente && (item.unidade === 'bag' || item.unidade === 'sc') && (
+                    <Input
+                      label="Sementes por bag (opcional)"
                       value={sementesPorSaco}
                       onChangeText={setSementesPorSaco}
                       keyboardType="decimal-pad"
@@ -605,14 +618,15 @@ function SementesSection() {
   const [modalDetalhe, setModalDetalhe] = useState(null);
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
-  const [unidade, setUnidade] = useState('sc');
+  const [unidade, setUnidade] = useState('bag');
   const [sementesPorSaco, setSementesPorSaco] = useState('');
+  const [kgPorBagAdd, setKgPorBagAdd] = useState('1000');
   const [pendingDelete, setPendingDelete] = useState(null);
 
   const catInfo = CATEGORIAS_SEMENTES.find(c => c.key === catAtiva);
   const produtos = sementes[catAtiva] || [];
 
-  function abrirAdd() { setNome(''); setQuantidade(''); setUnidade('sc'); setSementesPorSaco(''); setModalAdd(true); }
+  function abrirAdd() { setNome(''); setQuantidade(''); setUnidade('bag'); setSementesPorSaco(''); setKgPorBagAdd('1000'); setModalAdd(true); }
 
   async function salvar() {
     const nomeTrim = nome.trim();
@@ -622,7 +636,8 @@ function SementesSection() {
       return;
     }
     const spc = parseFloat(sementesPorSaco.replace(',', '.'));
-    await adicionarSemente(catAtiva, nomeTrim, qtd, unidade, (!isNaN(spc) && spc > 0) ? spc : null);
+    const kpb = parseFloat(kgPorBagAdd.replace(',', '.'));
+    await adicionarSemente(catAtiva, nomeTrim, qtd, unidade, (!isNaN(spc) && spc > 0) ? spc : null, (!isNaN(kpb) && kpb > 0) ? kpb : null);
     setModalAdd(false);
   }
 
@@ -700,7 +715,7 @@ function SementesSection() {
             <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" placeholder="Ex: 50" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
             <View style={styles.unidadeRow}>
-              {['sc', 'kg'].map(u => (
+              {['bag', 'kg'].map(u => (
                 <TouchableOpacity
                   key={u}
                   style={[styles.unidadeBtn, unidade === u && { backgroundColor: catInfo.cor, borderColor: catInfo.cor }]}
@@ -710,9 +725,9 @@ function SementesSection() {
                 </TouchableOpacity>
               ))}
             </View>
-            {unidade === 'sc' && (
+            {unidade === 'bag' && (
               <Input
-                label="Sementes por saco (opcional)"
+                label="Sementes por bag (opcional)"
                 value={sementesPorSaco}
                 onChangeText={setSementesPorSaco}
                 keyboardType="decimal-pad"
