@@ -196,8 +196,8 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
     fecharModal();
   }
 
-  function confirmarRemoverRegistro(registroId, desc) {
-    setPendingDelete({ id: registroId, label: desc, tipo: 'registro' });
+  function confirmarRemoverRegistro(registro) {
+    setPendingDelete({ id: registro.id, label: registro.descricao || '(sem descrição)', tipo: 'registro', registro });
   }
 
   async function confirmarPendencia(registro) {
@@ -305,7 +305,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                     <TouchableOpacity onPress={() => abrirEdicao(r)} style={{ padding: 10 }}>
                       <Ionicons name="pencil-outline" size={20} color="#6B7280" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => confirmarRemoverRegistro(r.id, r.descricao)} style={{ padding: 10 }}>
+                    <TouchableOpacity onPress={() => confirmarRemoverRegistro(r)} style={{ padding: 10 }}>
                       <Ionicons name="trash-outline" size={20} color={DANGER} />
                     </TouchableOpacity>
                   </View>
@@ -445,7 +445,16 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
               <TouchableOpacity style={styles.confirmBtnCancelar} onPress={() => setPendingDelete(null)}>
                 <Text style={styles.confirmBtnCancelarTxt}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtnExcluir} onPress={() => {
+              <TouchableOpacity style={styles.confirmBtnExcluir} onPress={async () => {
+                const reg = pendingDelete.registro;
+                if (reg && !reg.pendente) {
+                  const motivo = `${talhao.nome} - ${cultura.nome} (estorno)`;
+                  for (const p of (reg.produtosUsados || [])) {
+                    if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                    else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                    else if (p.tipo === 'semente') await adicionarMovimentacaoSemente(p.categoria, p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                  }
+                }
                 removerRegistroCultura(talhao.id, cultura.id, pendingDelete.id);
                 setPendingDelete(null);
               }}>
@@ -607,7 +616,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                     </TouchableOpacity>
                   )}
                   <View style={styles.registroAcoes}>
-                    <TouchableOpacity onPress={() => setPendingDelete({ id: r.id, label: r.descricao || info.label })} style={{ padding: 10 }}>
+                    <TouchableOpacity onPress={() => setPendingDelete({ id: r.id, label: r.descricao || info.label, registro: r })} style={{ padding: 10 }}>
                       <Ionicons name="trash-outline" size={20} color={DANGER} />
                     </TouchableOpacity>
                   </View>
@@ -733,7 +742,15 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
               <TouchableOpacity style={styles.confirmBtnCancelar} onPress={() => setPendingDelete(null)}>
                 <Text style={styles.confirmBtnCancelarTxt}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtnExcluir} onPress={() => {
+              <TouchableOpacity style={styles.confirmBtnExcluir} onPress={async () => {
+                const reg = pendingDelete.registro;
+                if (reg && !reg.pendente) {
+                  const motivo = `${talhao.nome} - ${cultura.nome} / ${variedade.nome} (estorno)`;
+                  for (const p of (reg.produtosUsados || [])) {
+                    if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                    else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                  }
+                }
                 removerRegistroVariedade(talhao.id, cultura.id, variedade.id, pendingDelete.id);
                 setPendingDelete(null);
               }}>
@@ -956,7 +973,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                     </TouchableOpacity>
                   )}
                   <View style={styles.registroAcoes}>
-                    <TouchableOpacity onPress={() => setPendingDelete({ tipo: 'registro', id: r.id, label: r.descricao || info.label })} style={{ padding: 10 }}>
+                    <TouchableOpacity onPress={() => setPendingDelete({ tipo: 'registro', id: r.id, label: r.descricao || info.label, registro: r })} style={{ padding: 10 }}>
                       <Ionicons name="trash-outline" size={20} color={DANGER} />
                     </TouchableOpacity>
                   </View>
@@ -1126,9 +1143,20 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
               <TouchableOpacity style={styles.confirmBtnCancelar} onPress={() => setPendingDelete(null)}>
                 <Text style={styles.confirmBtnCancelarTxt}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtnExcluir} onPress={() => {
-                if (pendingDelete.tipo === 'variedade') removerVariedadeCouve(talhao.id, cultura.id, pendingDelete.id);
-                else removerRegistroCultura(talhao.id, cultura.id, pendingDelete.id);
+              <TouchableOpacity style={styles.confirmBtnExcluir} onPress={async () => {
+                if (pendingDelete.tipo === 'variedade') {
+                  removerVariedadeCouve(talhao.id, cultura.id, pendingDelete.id);
+                } else {
+                  const reg = pendingDelete.registro;
+                  if (reg && !reg.pendente) {
+                    const motivo = `${talhao.nome} - Couve (estorno)`;
+                    for (const p of (reg.produtosUsados || [])) {
+                      if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                      else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'entrada', quantidade: p.quantidade, motivo });
+                    }
+                  }
+                  removerRegistroCultura(talhao.id, cultura.id, pendingDelete.id);
+                }
                 setPendingDelete(null);
               }}>
                 <Text style={styles.confirmBtnExcluirTxt}>Remover</Text>
