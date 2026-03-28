@@ -752,8 +752,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
 function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
   const {
     atualizarMudasCultura, adicionarVariedadeCouve, atualizarVariedadeCouve, removerVariedadeCouve,
-    adicionarRegistroCultura, removerRegistroCultura, atualizarRegistroCultura,
-    adicionarRegistroVariedade,
+    adicionarRegistroCultura, adicionarRegistroCulturaEVariedades, removerRegistroCultura, atualizarRegistroCultura,
     adubos, liquidos, adicionarMovimentacaoAdubo, adicionarMovimentacaoLiquido,
   } = useStorage();
 
@@ -838,18 +837,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
         tipo: tipoRegistro, descricao: descricao.trim(), data: dataISO,
         produtosUsados: produtosValidos, variedadesAplicadas: variedadesSel, pendente,
       };
-      await adicionarRegistroCultura(talhao.id, cultura.id, registroGeral);
-
-      // Replicar o registro em cada variedade selecionada
-      for (const nomeVar of variedadesSel) {
-        const variedade = (cultura.variedades || []).find(v => v.nome === nomeVar);
-        if (variedade) {
-          await adicionarRegistroVariedade(talhao.id, cultura.id, variedade.id, {
-            tipo: tipoRegistro, descricao: descricao.trim(), data: dataISO,
-            produtosUsados: produtosValidos, pendente,
-          });
-        }
-      }
+      await adicionarRegistroCulturaEVariedades(talhao.id, cultura.id, registroGeral, variedadesSel);
 
       if (!pendente) {
         const motivo = `${talhao.nome} - Couve`;

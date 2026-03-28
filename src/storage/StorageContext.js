@@ -620,7 +620,27 @@ export function StorageProvider({ children }) {
         ...t,
         culturas: t.culturas.map(c => {
           if (c.id !== culturaId) return c;
-          return { ...c, registros: [{ id: Date.now().toString(), ...registro }, ...c.registros] };
+          return { ...c, registros: [{ id: Date.now().toString(), ...registro }, ...(c.registros || [])] };
+        }),
+      };
+    }));
+  }
+
+  // Versão atômica: salva o registro geral + replica nas variedades em uma única operação
+  async function adicionarRegistroCulturaEVariedades(talhaoId, culturaId, registro, nomesVariedades) {
+    const novoId = Date.now().toString();
+    await salvarTalhoes(talhoes.map(t => {
+      if (t.id !== talhaoId) return t;
+      return {
+        ...t,
+        culturas: t.culturas.map(c => {
+          if (c.id !== culturaId) return c;
+          const novosRegistros = [{ id: novoId, ...registro }, ...(c.registros || [])];
+          const novasVariedades = (c.variedades || []).map((v, vi) => {
+            if (!nomesVariedades.includes(v.nome)) return v;
+            return { ...v, registros: [{ id: `${novoId}_v${vi}`, ...registro }, ...(v.registros || [])] };
+          });
+          return { ...c, registros: novosRegistros, variedades: novasVariedades };
         }),
       };
     }));
@@ -722,6 +742,7 @@ export function StorageProvider({ children }) {
         atualizarPrecoColheitaCouve,
         removerRegistroColheitaCouve,
         adicionarRegistroCultura,
+        adicionarRegistroCulturaEVariedades,
         removerRegistroCultura,
         atualizarRegistroCultura,
         exportarDados,
