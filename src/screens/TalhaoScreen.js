@@ -653,6 +653,8 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
   const [modalProduto, setModalProduto]   = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [pendente, setPendente]           = useState(false);
+  const [modoEdicao, setModoEdicao]       = useState(false);
+  const [registroEditando, setRegistroEditando] = useState(null);
 
   const TIPOS_VAR = TIPOS_REGISTRO.filter(t => t.key !== 'plantio');
 
@@ -679,9 +681,21 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
   }
 
   function abrirModal() {
+    setModoEdicao(false); setRegistroEditando(null);
     setTipoRegistro('aplicacao'); setDescricao(''); setProdutosUsados([]); setPendente(false);
     const hoje = new Date();
     setDataTexto(`${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`);
+    setModalVisible(true);
+  }
+
+  function abrirEdicao(registro) {
+    setModoEdicao(true); setRegistroEditando(registro);
+    setTipoRegistro(registro.tipo);
+    setDescricao(registro.descricao || '');
+    setProdutosUsados(registro.produtosUsados || []);
+    setPendente(registro.pendente || false);
+    const d = new Date(registro.data);
+    setDataTexto(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`);
     setModalVisible(true);
   }
 
@@ -692,16 +706,24 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
     const produtosValidos = produtosUsados
       .filter(p => { const q = parseFloat(String(p.quantidade).replace(',', '.')); return !isNaN(q) && q > 0; })
       .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(',', '.')) }));
-    await adicionarRegistroVariedadeEGeral(talhao.id, cultura.id, variedade.id, variedade.nome, {
-      tipo: tipoRegistro, descricao: descricao.trim(), data: dataISO, produtosUsados: produtosValidos, pendente,
-    });
-    if (!pendente) {
-      const motivo = `${talhao.nome} - Couve/${variedade.nome}`;
-      for (const p of produtosValidos) {
-        if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
-        else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+
+    if (modoEdicao && registroEditando) {
+      await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, registroEditando.id, {
+        tipo: tipoRegistro, descricao: descricao.trim(), data: dataISO, produtosUsados: produtosValidos, pendente: registroEditando.pendente,
+      });
+    } else {
+      await adicionarRegistroVariedadeEGeral(talhao.id, cultura.id, variedade.id, variedade.nome, {
+        tipo: tipoRegistro, descricao: descricao.trim(), data: dataISO, produtosUsados: produtosValidos, pendente,
+      });
+      if (!pendente) {
+        const motivo = `${talhao.nome} - Couve/${variedade.nome}`;
+        for (const p of produtosValidos) {
+          if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+          else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
+        }
       }
     }
+    setModoEdicao(false); setRegistroEditando(null);
     setModalVisible(false);
   }
 
@@ -803,6 +825,9 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                     </TouchableOpacity>
                   )}
                   <View style={styles.registroAcoes}>
+                    <TouchableOpacity onPress={() => abrirEdicao(r)} style={{ padding: 10 }}>
+                      <Ionicons name="pencil-outline" size={20} color="#6B7280" />
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => setPendingDelete({ id: r.id, label: r.descricao || info.label, registro: r })} style={{ padding: 10 }}>
                       <Ionicons name="trash-outline" size={20} color={DANGER} />
                     </TouchableOpacity>
@@ -823,7 +848,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ justifyContent: 'flex-end', flexGrow: 1 }} keyboardShouldPersistTaps="handled">
             <View style={styles.modalBox}>
-              <Text style={styles.modalTitulo}>Novo Registro — {variedade.nome}</Text>
+              <Text style={styles.modalTitulo}>{modoEdicao ? 'Editar Registro' : `Novo Registro — ${variedade.nome}`}</Text>
               <Text style={styles.fieldLabel}>Tipo</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {TIPOS_VAR.map(t => (
@@ -896,8 +921,8 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                 </View>
               </TouchableOpacity>
               <View style={styles.modalAcoes}>
-                <Button label="Cancelar" onPress={() => setModalVisible(false)} variant="secondary" style={{ flex: 1 }} />
-                <Button label="Salvar" onPress={salvar} variant="primary" style={{ flex: 1 }} />
+                <Button label="Cancelar" onPress={() => { setModalVisible(false); setModoEdicao(false); setRegistroEditando(null); }} variant="secondary" style={{ flex: 1 }} />
+                <Button label={modoEdicao ? 'Atualizar' : 'Salvar'} onPress={salvar} variant="primary" style={{ flex: 1 }} />
               </View>
             </View>
           </ScrollView>
