@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Expo (default)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npm", "run", "start", "--", "--host", "lan"],
+      "port": 8081
+    },
+    {
+      "name": "Expo (web)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npx expo start --web --port 19006"],
+      "port": 19006,
+      "autoPort": false
+    },
+    {
+      "name": "Expo (iOS)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npm", "run", "ios"],
+      "port": 8081
+    },
+    {
+      "name": "Expo (Android)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npm", "run", "android"],
+      "port": 8081
+    }
+  ]
+}

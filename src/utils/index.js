@@ -105,6 +105,16 @@ export function abaixoDoMinimo(item) {
 }
 
 /**
+ * Parseia quantidade aceitando ponto de milhar e vírgula como decimal.
+ * Ex: "1.500,5" → 1500.5
+ * @param {string|number} valor
+ * @returns {number}
+ */
+export function parseQuantidade(valor) {
+  return parseFloat(String(valor).replace(/\./g, '').replace(',', '.'));
+}
+
+/**
  * Calcula valor total de um item de estoque.
  * @param {{ quantidade: number, custoPorUnidade?: number }} item
  * @returns {number|null}

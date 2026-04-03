@@ -10,10 +10,8 @@ import { extrairTextoDaImagem } from '../services/ocrService';
 import { parsearProdutos } from '../services/danfeParser';
 import Card from '../components/Card';
 import Button from '../components/Button';
-
-const PRIMARY = '#1B4332';
-const ACCENT  = '#D4A017';
-const DANGER  = '#C0392B';
+import { PRIMARY, ACCENT, DANGER } from '../constants';
+import { parseQuantidade } from '../utils';
 
 const TIPO_LABELS = {
   adubo:       { label: 'Adubo',    cor: '#2D6A4F' },
@@ -37,45 +35,34 @@ export default function ScanNotaScreen({ navigation, route }) {
   } = useStorage();
 
   const [momento, setMomento]         = useState('captura'); // 'captura' | 'revisao'
-  const [carregando, setCarregando]   = useState(false);
-  const [progressoTxt, setProgressoTxt] = useState('Lendo nota fiscal...');
+  const [progressoTxt, setProgressoTxt] = useState(null);
   const [produtos, setProdutos]       = useState([]);
 
   // ─── captura ────────────────────────────────────────────────────────────────
 
-  async function abrirCamera() {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'O app precisa da câmera para fotografar notas fiscais.');
-      return;
+  async function abrirSeletor(tipo) {
+    let result;
+    if (tipo === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'O app precisa da câmera para fotografar notas fiscais.');
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync({ quality: 0.8, base64: true });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'O app precisa acessar suas fotos para importar notas fiscais.');
+        return;
+      }
+      result = await ImagePicker.launchImageLibraryAsync({ quality: 0.8, base64: true, mediaTypes: ImagePicker.MediaTypeOptions.Images });
     }
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.8,
-      base64: true,
-    });
-    if (!result.canceled && result.assets?.[0]?.base64) {
-      processarImagem(result.assets[0].base64);
-    }
-  }
-
-  async function abrirGaleria() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'O app precisa acessar suas fotos para importar notas fiscais.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      quality: 0.8,
-      base64: true,
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
     if (!result.canceled && result.assets?.[0]?.base64) {
       processarImagem(result.assets[0].base64);
     }
   }
 
   async function processarImagem(base64) {
-    setCarregando(true);
     setProgressoTxt('Carregando motor de leitura...');
     try {
       setProgressoTxt('Analisando a imagem...');
@@ -88,7 +75,7 @@ export default function ScanNotaScreen({ navigation, route }) {
           'Não foi possível identificar produtos na nota. Você pode adicionar manualmente no estoque.',
           [{ text: 'OK' }]
         );
-        setCarregando(false);
+        setProgressoTxt(null);
         return;
       }
       setProdutos(encontrados.map((p, i) => ({ ...p, uid: String(i) })));
@@ -96,7 +83,7 @@ export default function ScanNotaScreen({ navigation, route }) {
     } catch (err) {
       Alert.alert('Erro ao ler nota', err.message || 'Tente novamente.');
     } finally {
-      setCarregando(false);
+      setProgressoTxt(null);
     }
   }
 
@@ -113,7 +100,7 @@ export default function ScanNotaScreen({ navigation, route }) {
   async function adicionarTodos() {
     let erros = 0;
     for (const p of produtos) {
-      const qtd = parseFloat(String(p.quantidade).replace(',', '.'));
+      const qtd = parseQuantidade(p.quantidade);
       if (isNaN(qtd) || qtd <= 0 || !p.nome.trim()) { erros++; continue; }
       try {
         if (p.tipoSugerido === 'adubo') {
@@ -141,7 +128,7 @@ export default function ScanNotaScreen({ navigation, route }) {
 
   // ─── render ─────────────────────────────────────────────────────────────────
 
-  if (carregando) {
+  if (progressoTxt !== null) {
     return (
       <View style={styles.loadingBox}>
         <ActivityIndicator size="large" color={PRIMARY} />
@@ -167,12 +154,12 @@ export default function ScanNotaScreen({ navigation, route }) {
             O app vai identificar os produtos, quantidades e unidades automaticamente.
           </Text>
 
-          <TouchableOpacity style={styles.capturaBtnPrimario} onPress={abrirCamera}>
+          <TouchableOpacity style={styles.capturaBtnPrimario} onPress={() => abrirSeletor('camera')}>
             <Ionicons name="camera-outline" size={22} color="#fff" />
             <Text style={styles.capturaBtnTxt}>Tirar foto da nota</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.capturaBtnSecundario} onPress={abrirGaleria}>
+          <TouchableOpacity style={styles.capturaBtnSecundario} onPress={() => abrirSeletor('galeria')}>
             <Ionicons name="images-outline" size={22} color={PRIMARY} />
             <Text style={[styles.capturaBtnTxt, { color: PRIMARY }]}>Escolher da galeria</Text>
           </TouchableOpacity>

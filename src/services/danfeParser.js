@@ -3,6 +3,8 @@
  * Identifica produtos, quantidades, unidades e tipo sugerido.
  */
 
+import { parseQuantidade } from '../utils';
+
 // Padrões de unidade reconhecidos
 const UNIDADES_VALIDAS = ['KG', 'L', 'LT', 'SC', 'BAG', 'T', 'UN', 'CX', 'FR'];
 
@@ -59,7 +61,7 @@ function detectarTipo(nome, contexto) {
 function normalizarUnidade(unidade) {
   const u = unidade.toUpperCase();
   if (u === 'LT') return 'L';
-  if (u === 'UN' || u === 'CX' || u === 'FR') return 'kg';
+  if (u === 'UN' || u === 'CX' || u === 'FR') return 'un';
   return u.toLowerCase() === u ? u : u.charAt(0) + u.slice(1).toLowerCase();
 }
 
@@ -87,8 +89,7 @@ export function parsearProdutos(texto) {
     const matches = [...linha.matchAll(REGEX_QTD_UNIDADE)];
 
     for (const match of matches) {
-      const qtdRaw = match[1].replace(/\./g, '').replace(',', '.');
-      const quantidade = parseFloat(qtdRaw);
+      const quantidade = parseQuantidade(match[1]);
       if (isNaN(quantidade) || quantidade <= 0) continue;
 
       const unidade = normalizarUnidade(match[2]);

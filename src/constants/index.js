@@ -46,3 +46,8 @@ export const PRESETS_TANQUE = [
   { label: '1200 L',       valor: 1200 },
   { label: '2000 L',       valor: 2000 },
 ];
+
+export const PRIMARY  = '#1B4332';
+export const ACCENT   = '#D4A017';
+export const DANGER   = '#C0392B';
+export const INACTIVE = '#9CA3AF';
