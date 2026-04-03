@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useEstoque } from '../hooks/useEstoque';
 import { useStorage } from '../storage/StorageContext';
+import { useFarm } from '../storage/FarmContext';
 import Card from '../components/Card';
 
 const PRIMARY = '#1B4332';
@@ -29,10 +30,9 @@ function saudacao() {
 // ─── cards de navegação 2×2 ─────────────────────────────────────────────────
 
 const CARDS = [
-  { tela: 'Estoque',   label: 'Estoque',    sublabel: 'Adubos e defensivos',    icone: 'cube-outline',      cor: PRIMARY },
-  { tela: 'Talhao',    label: 'Talhão',     sublabel: 'Agenda por área',        icone: 'map-outline',       cor: PRIMARY },
-  { tela: 'Colheita',  label: 'Colheita',   sublabel: 'Registros de colheita',  icone: 'basket-outline',    cor: PRIMARY },
-  { tela: 'Relatorio', label: 'Relatórios', sublabel: 'Histórico e financeiro', icone: 'bar-chart-outline', cor: PRIMARY },
+  { tela: 'Estoque',  label: 'Estoque',  sublabel: 'Adubos e defensivos',   icone: 'cube-outline',   cor: PRIMARY },
+  { tela: 'Talhao',   label: 'Talhão',   sublabel: 'Agenda por área',       icone: 'map-outline',    cor: PRIMARY },
+  { tela: 'Colheita', label: 'Colheita', sublabel: 'Registros de colheita', icone: 'basket-outline', cor: PRIMARY },
 ];
 
 function NavCard({ item, onPress }) {
@@ -56,6 +56,7 @@ function NavCard({ item, onPress }) {
 export default function HomeScreen({ navigation }) {
   const { adubos, todosProdutosLiquidos, alertasAdubos, alertasLiquidos, totalAlertas, valorTotalEstoque } = useEstoque();
   const { talhoes } = useStorage();
+  const { farmCode } = useFarm();
   const totalPendentes = (talhoes || []).reduce((acc, t) =>
     acc + (t.culturas || []).reduce((a2, c) =>
       a2 + (c.registros || []).filter(r => r.pendente).length, 0), 0);
@@ -92,6 +93,12 @@ export default function HomeScreen({ navigation }) {
           <View>
             <Text style={styles.greetLabel}>{saudacao()},</Text>
             <Text style={styles.greetName}>{nomeProdutor ?? 'produtor'}</Text>
+            {farmCode ? (
+              <View style={styles.farmCodeRow}>
+                <Ionicons name="key-outline" size={12} color="#9CA3AF" />
+                <Text style={styles.farmCodeTxt}>Fazenda: {farmCode}</Text>
+              </View>
+            ) : null}
           </View>
           <Ionicons name="leaf" size={36} color={ACCENT} />
         </View>
@@ -201,8 +208,10 @@ const styles = StyleSheet.create({
 
   // Saudação
   greetRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
-  greetLabel: { fontFamily: 'Inter_400Regular', fontSize: 16, color: '#6B7280' },
-  greetName:  { fontFamily: 'Inter_700Bold', fontSize: 26, color: PRIMARY },
+  greetLabel:   { fontFamily: 'Inter_400Regular', fontSize: 16, color: '#6B7280' },
+  greetName:    { fontFamily: 'Inter_700Bold', fontSize: 26, color: PRIMARY },
+  farmCodeRow:  { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  farmCodeTxt:  { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#9CA3AF' },
 
   // Card de status
   statusCard:   { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -17,7 +17,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import EstoqueScreen from './src/screens/EstoqueScreen';
 import TalhaoScreen from './src/screens/TalhaoScreen';
 import ColheitaScreen from './src/screens/ColheitaScreen';
-import RelatorioScreen from './src/screens/RelatorioScreen';
+
 import ScanNotaScreen from './src/screens/ScanNotaScreen';
 
 SplashScreen.preventAutoHideAsync();
@@ -34,7 +34,7 @@ const TAB_ICONS = {
   Estoque:   'cube-outline',
   Talhao:    'map-outline',
   Colheita:  'basket-outline',
-  Relatorio: 'bar-chart-outline',
+
 };
 
 function TabNavigator() {
@@ -64,8 +64,7 @@ function TabNavigator() {
           })}
         >
           <Tab.Screen name="Home"      component={HomeScreen}      options={{ title: 'Montico Farm Pro', tabBarLabel: 'Início'   }} />
-          <Tab.Screen name="Relatorio" component={RelatorioScreen} options={{ title: 'Relatórios',       tabBarLabel: 'Relatório'}} />
-          <Tab.Screen name="Estoque"   component={EstoqueScreen}   options={{ title: 'Estoque',          tabBarLabel: 'Estoque'  }} />
+<Tab.Screen name="Estoque"   component={EstoqueScreen}   options={{ title: 'Estoque',          tabBarLabel: 'Estoque'  }} />
           <Tab.Screen name="Talhao"    component={TalhaoScreen}    options={{ title: 'Talhões',          tabBarLabel: 'Talhão'   }} />
           <Tab.Screen name="Colheita"  component={ColheitaScreen}  options={{ title: 'Colheita',         tabBarLabel: 'Colheita' }} />
     </Tab.Navigator>
