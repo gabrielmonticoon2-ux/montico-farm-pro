@@ -14,8 +14,10 @@ export function useTalhao() {
   const todosRegistros = useMemo(() => {
     const lista = [];
     for (const t of talhoes) {
-      for (const r of t.registros) {
-        lista.push({ ...r, talhaoNome: t.nome, talhaoId: t.id });
+      for (const c of (t.culturas || [])) {
+        for (const r of (c.registros || [])) {
+          lista.push({ ...r, talhaoNome: t.nome, talhaoId: t.id, culturaNome: c.nome });
+        }
       }
     }
     return lista.sort((a, b) => new Date(b.data) - new Date(a.data));
@@ -39,7 +41,8 @@ export function useTalhao() {
 
   // Total de registros em todos os talhões
   const totalRegistros = useMemo(
-    () => talhoes.reduce((s, t) => s + t.registros.length, 0),
+    () => talhoes.reduce((s, t) =>
+      s + (t.culturas || []).reduce((sc, c) => sc + (c.registros || []).length, 0), 0),
     [talhoes]
   );
 

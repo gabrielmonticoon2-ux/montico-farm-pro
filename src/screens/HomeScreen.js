@@ -11,6 +11,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useEstoque } from '../hooks/useEstoque';
+import { useStorage } from '../storage/StorageContext';
 import Card from '../components/Card';
 
 const PRIMARY = '#1B4332';
@@ -54,6 +55,10 @@ function NavCard({ item, onPress }) {
 
 export default function HomeScreen({ navigation }) {
   const { adubos, todosProdutosLiquidos, alertasAdubos, alertasLiquidos, totalAlertas, valorTotalEstoque } = useEstoque();
+  const { talhoes } = useStorage();
+  const totalPendentes = (talhoes || []).reduce((acc, t) =>
+    acc + (t.culturas || []).reduce((a2, c) =>
+      a2 + (c.registros || []).filter(r => r.pendente).length, 0), 0);
   const [nomeProdutor, setNomeProdutor] = useState(null);
   const [nomeInput, setNomeInput]       = useState('');
   const [modalNome, setModalNome]       = useState(false);
@@ -107,6 +112,12 @@ export default function HomeScreen({ navigation }) {
               <View style={styles.badgeOk}>
                 <Ionicons name="checkmark-circle" size={13} color="#065F46" />
                 <Text style={styles.badgeOkTxt}>Tudo OK</Text>
+              </View>
+            )}
+            {totalPendentes > 0 && (
+              <View style={styles.badgePendente}>
+                <Ionicons name="time-outline" size={13} color="#92400E" />
+                <Text style={styles.badgePendenteTxt}>{totalPendentes} pendente{totalPendentes !== 1 ? 's' : ''}</Text>
               </View>
             )}
             {valorTotalEstoque > 0 && (
@@ -203,6 +214,8 @@ const styles = StyleSheet.create({
   badgeDangerTxt: { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#991B1B' },
   badgeOk:      { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#D1FAE5', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
   badgeOkTxt:   { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#065F46' },
+  badgePendente:    { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FEF3C7', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  badgePendenteTxt: { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#92400E' },
   valorEstoque: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#6B7280' },
 
   // Seção

@@ -26,21 +26,13 @@ const TIPOS_REGISTRO = [
 const CORES_CULTURA = ['#27AE60', '#1565C0', '#D97706', '#9B59B6', '#C0392B', '#2D6A4F'];
 
 // Culturas que têm sementes no estoque
-const CULTURAS_SEMENTES_MAP = { 'Milho': 'milho', 'Soja': 'soja', 'Feijão': 'feijao' };
+const CULTURAS_SEMENTES_MAP = { 'Milho': 'milho', 'Soja': 'soja', 'Feijão': 'feijao', 'Trigo': 'trigo' };
 // Espaçamento entre carreiros: 45 cm → 1 ha = 10000 m² → linhas por ha = 10000/0.45
 const SEMENTE_FATOR_HA = 10000 / 0.45; // ≈ 22222 linhas/ha
 const SACO_ADUBO_KG = 50;
 const TONELADA_KG = 1000;
 const ADUBO_UNIDADES = ['kg', 'sc', 't'];
 
-function fmtMil(val) {
-  const s = String(val || '');
-  if (!s) return s;
-  const [i, d] = s.split(',');
-  const fmt = i.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return d !== undefined ? `${fmt},${d}` : fmt;
-}
-function stripMil(text) { return text.replace(/\./g, ''); }
 
 function toKg(valor, unidade) {
   if (unidade === 'sc') return valor * SACO_ADUBO_KG;
@@ -135,6 +127,8 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
   const [produtosUsados, setProdutosUsados]     = useState([]);
   const [modalProduto, setModalProduto]         = useState(false);
   const [pendente, setPendente]                 = useState(false);
+  const [modalConfData, setModalConfData]       = useState(null);
+  const [dataConfTexto, setDataConfTexto]       = useState('');
 
   function abrirModal() {
     setModoEdicao(false); setRegistroEditando(null);
@@ -283,8 +277,8 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
     const dataISO = isNaN(data.getTime()) ? new Date().toISOString() : data.toISOString();
 
     const produtosValidos = produtosUsados
-      .filter(p => { const q = parseFloat(String(p.quantidade).replace(',', '.')); return !isNaN(q) && q > 0; })
-      .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(',', '.')) }));
+      .filter(p => { const q = parseFloat(String(p.quantidade).replace(/\./g, '').replace(',', '.')); return !isNaN(q) && q > 0; })
+      .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(/\./g, '').replace(',', '.')) }));
 
     if (modoEdicao && registroEditando) {
       await atualizarRegistroCultura(talhao.id, cultura.id, registroEditando.id, {
@@ -313,7 +307,17 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
     setPendingDelete({ id: registro.id, label: registro.descricao || '(sem descrição)', tipo: 'registro', registro });
   }
 
-  async function confirmarPendencia(registro) {
+  function abrirConfirmarPendencia(registro) {
+    const hoje = new Date();
+    setDataConfTexto(`${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`);
+    setModalConfData(registro);
+  }
+
+  async function executarConfirmarPendencia() {
+    const registro = modalConfData;
+    const [dia, mes, ano] = dataConfTexto.split('/');
+    const dataConf = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    const dataISO = isNaN(dataConf.getTime()) ? new Date().toISOString() : dataConf.toISOString();
     const motivo = `${talhao.nome} - ${cultura.nome}`;
     for (const p of (registro.produtosUsados || [])) {
       if (p.tipo === 'liquido')
@@ -323,7 +327,8 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
       else if (p.tipo === 'semente')
         await adicionarMovimentacaoSemente(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
     }
-    await atualizarRegistroCultura(talhao.id, cultura.id, registro.id, { ...registro, pendente: false });
+    await atualizarRegistroCultura(talhao.id, cultura.id, registro.id, { ...registro, pendente: false, data: dataISO });
+    setModalConfData(null);
   }
 
   const registros = [...(cultura.registros || [])].sort((a, b) => new Date(b.data) - new Date(a.data));
@@ -409,7 +414,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                     </View>
                   )}
                   {r.pendente && (
-                    <TouchableOpacity style={styles.confirmarPendenciaBtn} onPress={() => confirmarPendencia(r)}>
+                    <TouchableOpacity style={styles.confirmarPendenciaBtn} onPress={() => abrirConfirmarPendencia(r)}>
                       <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
                       <Text style={styles.confirmarPendenciaTxt}>Confirmar — descontar do estoque</Text>
                     </TouchableOpacity>
@@ -493,7 +498,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                             })()}
                             <Text style={[styles.fieldLabel, { marginTop: 2 }]}>Qtd. a retirar do estoque</Text>
                             <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
+                              <TextInput style={styles.produtoQtdInput} value={String(p.quantidade || '')} onChangeText={v => atualizarQtdProduto(p.uid, v.replace(/\./g, ''))} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                             </View>
                           </View>
@@ -538,7 +543,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                               </View>
                             ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                               <View style={styles.doseRow}>
-                                <TextInput style={styles.produtoQtdInput} value={fmtMil(p.qtdEntrada || '')} onChangeText={v => atualizarQtdEntradaAdubo(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
+                                <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => atualizarQtdEntradaAdubo(p.uid, v.replace(/\./g, ''))} keyboardType="decimal-pad" placeholder="0" />
                                 <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
                                 {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
                                   <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
@@ -546,7 +551,7 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
                               </View>
                             ) : (
                               <View style={styles.doseRow}>
-                                <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => atualizarQtdProduto(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
+                                <TextInput style={styles.produtoQtdInput} value={String(p.quantidade || '')} onChangeText={v => atualizarQtdProduto(p.uid, v.replace(/\./g, ''))} keyboardType="decimal-pad" placeholder="0" />
                                 <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                               </View>
                             )}
@@ -655,6 +660,25 @@ function CulturaDetalhe({ talhao, cultura, onVoltar, corCultura }) {
           </View>
         </View>
       </Modal>
+
+      {/* Modal data de confirmação de pendência */}
+      <Modal visible={!!modalConfData} transparent animationType="fade">
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <Text style={styles.confirmTitulo}>Data da confirmação</Text>
+            <Text style={styles.confirmMsg}>Informe a data em que o produto foi aplicado.</Text>
+            <Input label="Data (DD/MM/AAAA)" value={dataConfTexto} onChangeText={t => setDataConfTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
+            <View style={styles.confirmAcoes}>
+              <TouchableOpacity style={styles.confirmBtnCancelar} onPress={() => setModalConfData(null)}>
+                <Text style={styles.confirmBtnCancelarTxt}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.confirmBtnExcluir, { backgroundColor: PRIMARY }]} onPress={executarConfirmarPendencia}>
+                <Text style={styles.confirmBtnExcluirTxt}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -676,6 +700,8 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
   const [modalProduto, setModalProduto]   = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [pendente, setPendente]           = useState(false);
+  const [modalConfData, setModalConfData] = useState(null);
+  const [dataConfTexto, setDataConfTexto] = useState('');
   const [modoEdicao, setModoEdicao]       = useState(false);
   const [registroEditando, setRegistroEditando] = useState(null);
 
@@ -771,8 +797,8 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
     const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
     const dataISO = isNaN(data.getTime()) ? new Date().toISOString() : data.toISOString();
     const produtosValidos = produtosUsados
-      .filter(p => { const q = parseFloat(String(p.quantidade).replace(',', '.')); return !isNaN(q) && q > 0; })
-      .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(',', '.')) }));
+      .filter(p => { const q = parseFloat(String(p.quantidade).replace(/\./g, '').replace(',', '.')); return !isNaN(q) && q > 0; })
+      .map(p => ({ ...p, quantidade: parseFloat(String(p.quantidade).replace(/\./g, '').replace(',', '.')) }));
 
     if (modoEdicao && registroEditando) {
       await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, registroEditando.id, {
@@ -794,16 +820,25 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
     setModalVisible(false);
   }
 
-  async function confirmarPendenciaVar(r) {
+  function abrirConfirmarPendenciaVar(r) {
+    const hoje = new Date();
+    setDataConfTexto(`${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`);
+    setModalConfData(r);
+  }
+
+  async function executarConfirmarPendenciaVar() {
+    const r = modalConfData;
+    const [dia, mes, ano] = dataConfTexto.split('/');
+    const dataConf = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    const dataISO = isNaN(dataConf.getTime()) ? new Date().toISOString() : dataConf.toISOString();
+    setModalConfData(null);
     if (r.culturaRegistroId) {
       // Verifica se esta é a ÚLTIMA variedade pendente vinculada ao registro geral
-      // (usando o estado atual, antes de qualquer atualização)
       const todasConfirmadas = (cultura.variedades || []).every(v =>
         (v.registros || [])
           .filter(rv => rv.culturaRegistroId === r.culturaRegistroId)
           .every(rv => (v.id === variedade.id && rv.id === r.id) ? true : !rv.pendente)
       );
-
       if (todasConfirmadas) {
         // Última variedade: descontar estoque e confirmar tudo atomicamente
         const registroGeral = (cultura.registros || []).find(rg => rg.id === r.culturaRegistroId);
@@ -814,20 +849,19 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
             else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
           }
         }
-        // Confirma variedade + geral em uma única operação atômica
         await confirmarRegistroCulturaEVariedades(talhao.id, cultura.id, r.culturaRegistroId);
       } else {
         // Ainda há outras variedades pendentes: só confirma esta
-        await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
+        await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false, data: dataISO });
       }
     } else {
-      // Registro criado diretamente na variedade: comportamento original
+      // Registro criado diretamente na variedade
       const motivo = `${talhao.nome} - Couve/${variedade.nome}`;
       for (const p of (r.produtosUsados || [])) {
         if (p.tipo === 'liquido') await adicionarMovimentacaoLiquido(p.categoria, p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
         else if (p.tipo === 'adubo') await adicionarMovimentacaoAdubo(p.id, { tipo: 'saida', quantidade: p.quantidade, motivo });
       }
-      await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false });
+      await atualizarRegistroVariedade(talhao.id, cultura.id, variedade.id, r.id, { pendente: false, data: dataISO });
     }
   }
 
@@ -886,7 +920,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                     </View>
                   )}
                   {r.pendente && (
-                    <TouchableOpacity style={styles.confirmarPendenciaBtn} onPress={() => confirmarPendenciaVar(r)}>
+                    <TouchableOpacity style={styles.confirmarPendenciaBtn} onPress={() => abrirConfirmarPendenciaVar(r)}>
                       <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
                       <Text style={styles.confirmarPendenciaTxt}>Confirmar — descontar do estoque</Text>
                     </TouchableOpacity>
@@ -978,7 +1012,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                             </View>
                           ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                             <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={fmtMil(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboVar(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
+                              <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboVar(p.uid, v.replace(/\./g, ''))} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
                               {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
                                 <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
@@ -986,7 +1020,7 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                             </View>
                           ) : (
                             <View style={styles.doseRow}>
-                              <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: stripMil(v) } : x))} keyboardType="decimal-pad" placeholder="0" />
+                              <TextInput style={styles.produtoQtdInput} value={String(p.quantidade || '')} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v.replace(/\./g, '') } : x))} keyboardType="decimal-pad" placeholder="0" />
                               <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                             </View>
                           )}
@@ -1083,6 +1117,25 @@ function VariedadeDetalhe({ talhao, cultura, variedade, corCultura, onVoltar }) 
                 setPendingDelete(null);
               }}>
                 <Text style={styles.confirmBtnExcluirTxt}>Remover</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal data de confirmação de pendência */}
+      <Modal visible={!!modalConfData} transparent animationType="fade">
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <Text style={styles.confirmTitulo}>Data da confirmação</Text>
+            <Text style={styles.confirmMsg}>Informe a data em que o produto foi aplicado.</Text>
+            <Input label="Data (DD/MM/AAAA)" value={dataConfTexto} onChangeText={t => setDataConfTexto(formatarDataInput(t))} keyboardType="numeric" placeholder="Ex: 14/03/2026" maxLength={10} thousands={false} />
+            <View style={styles.confirmAcoes}>
+              <TouchableOpacity style={styles.confirmBtnCancelar} onPress={() => setModalConfData(null)}>
+                <Text style={styles.confirmBtnCancelarTxt}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.confirmBtnExcluir, { backgroundColor: PRIMARY }]} onPress={executarConfirmarPendenciaVar}>
+                <Text style={styles.confirmBtnExcluirTxt}>Confirmar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1482,7 +1535,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                                 </View>
                               ) : p.tipo === 'adubo' && isAduboPesavel(p.unidade) ? (
                                 <View style={styles.doseRow}>
-                                  <TextInput style={styles.produtoQtdInput} value={fmtMil(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboCouve(p.uid, stripMil(v))} keyboardType="decimal-pad" placeholder="0" />
+                                  <TextInput style={styles.produtoQtdInput} value={String(p.qtdEntrada || '')} onChangeText={v => setQtdEntradaAduboCouve(p.uid, v.replace(/\./g, ''))} keyboardType="decimal-pad" placeholder="0" />
                                   <Text style={styles.produtoUnidade}>{p.unidadeEntrada || p.unidade}</Text>
                                   {(p.unidadeEntrada && p.unidadeEntrada !== p.unidade && !!p.quantidade) && (
                                     <Text style={styles.doseTotal}>= {p.quantidade} {p.unidade}</Text>
@@ -1490,7 +1543,7 @@ function CouveDetalhe({ talhao, cultura, corCultura, onVoltar }) {
                                 </View>
                               ) : (
                                 <View style={styles.doseRow}>
-                                  <TextInput style={styles.produtoQtdInput} value={fmtMil(p.quantidade)} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: stripMil(v) } : x))} keyboardType="decimal-pad" placeholder="0" />
+                                  <TextInput style={styles.produtoQtdInput} value={String(p.quantidade || '')} onChangeText={v => setProdutosUsados(prev => prev.map(x => x.uid === p.uid ? { ...x, quantidade: v.replace(/\./g, '') } : x))} keyboardType="decimal-pad" placeholder="0" />
                                   <Text style={styles.produtoUnidade}>{p.unidade}</Text>
                                 </View>
                               )}
@@ -1738,6 +1791,12 @@ function TalhaoDetalhe({ talhao, onVoltar }) {
                       {(c.registros || []).length} registro{(c.registros || []).length !== 1 ? 's' : ''}
                       {c.hectares ? `  ·  ${c.hectares} ha` : ''}
                     </Text>
+                    {(c.registros || []).some(r => r.pendente) && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                        <Ionicons name="time-outline" size={11} color="#D97706" />
+                        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#D97706' }}>Pendente</Text>
+                      </View>
+                    )}
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
                 </TouchableOpacity>

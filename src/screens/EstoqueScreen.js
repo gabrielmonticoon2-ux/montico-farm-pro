@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStorage } from '../storage/StorageContext';
-import { CATEGORIAS_SEMENTES } from '../constants';
+import { CATEGORIAS_SEMENTES, CATEGORIAS_LIQUIDOS } from '../constants';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -321,7 +321,7 @@ function ModalConfirmarExclusao({ visivel, label, onConfirmar, onCancelar }) {
 
 // ─── Adubos ──────────────────────────────────────────────────────────────────
 
-function AdubosSection() {
+function AdubosSection({ navigation }) {
   const { adubos, adicionarAdubo, removerAdubo, atualizarConfigAdubo, adicionarMovimentacaoAdubo } = useStorage();
   const [modalAdd, setModalAdd] = useState(false);
   const [modalDetalhe, setModalDetalhe] = useState(null);
@@ -356,6 +356,10 @@ function AdubosSection() {
 
   return (
     <View style={styles.secao}>
+      <TouchableOpacity style={styles.importarBtn} onPress={() => navigation.navigate('ScanNota', { tipoInicial: 'adubo' })}>
+        <Ionicons name="camera-outline" size={16} color={PRIMARY} />
+        <Text style={styles.importarBtnTxt}>Importar por nota fiscal</Text>
+      </TouchableOpacity>
       {adubos.length === 0 && (
         <Card style={styles.emptyCard}>
           <Ionicons name="bag-outline" size={32} color="#D1D5DB" />
@@ -455,15 +459,8 @@ function AdubosSection() {
 
 // ─── Líquidos ─────────────────────────────────────────────────────────────────
 
-const CATEGORIAS = [
-  { key: 'herbicidas',  label: 'Herbicidas',  cor: '#C0392B' },
-  { key: 'fungicidas',  label: 'Fungicidas',  cor: '#1565C0' },
-  { key: 'inseticidas', label: 'Inseticidas', cor: '#E65100' },
-  { key: 'adjuvantes',  label: 'Adjuvantes',  cor: '#6A1B9A' },
-  { key: 'foliares',    label: 'Foliares',    cor: '#2D6A4F' },
-];
 
-function LiquidosSection() {
+function LiquidosSection({ navigation }) {
   const { liquidos, adicionarLiquido, removerLiquido, atualizarConfigLiquido, adicionarMovimentacaoLiquido } = useStorage();
   const [catAtiva, setCatAtiva] = useState('herbicidas');
   const [modalAdd, setModalAdd] = useState(false);
@@ -473,7 +470,7 @@ function LiquidosSection() {
   const [unidade, setUnidade] = useState('L');
   const [pendingDelete, setPendingDelete] = useState(null); // { id, label }
 
-  const catInfo = CATEGORIAS.find(c => c.key === catAtiva);
+  const catInfo = CATEGORIAS_LIQUIDOS.find(c => c.key === catAtiva);
   const produtos = liquidos[catAtiva] || [];
 
   function abrirAdd() { setNome(''); setQuantidade(''); setUnidade('L'); setModalAdd(true); }
@@ -497,9 +494,13 @@ function LiquidosSection() {
 
   return (
     <View style={styles.secao}>
+      <TouchableOpacity style={styles.importarBtn} onPress={() => navigation.navigate('ScanNota', { tipoInicial: 'liquido' })}>
+        <Ionicons name="camera-outline" size={16} color={PRIMARY} />
+        <Text style={styles.importarBtnTxt}>Importar por nota fiscal</Text>
+      </TouchableOpacity>
       {/* Tabs de categoria */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
-        {CATEGORIAS.map(c => {
+        {CATEGORIAS_LIQUIDOS.map(c => {
           const temAlerta = (liquidos[c.key] || []).some(abaixoDoMinimo);
           const ativa = catAtiva === c.key;
           return (
@@ -570,7 +571,7 @@ function LiquidosSection() {
       <Modal visible={modalAdd} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitulo}>Adicionar {catInfo.label.slice(0, -1)}</Text>
+            <Text style={styles.modalTitulo}>Adicionar {catInfo.labelSingular}</Text>
             <Input label="Nome do produto" value={nome} onChangeText={setNome} placeholder="Ex: Roundup" />
             <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" thousands placeholder="Ex: 160" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
@@ -614,7 +615,7 @@ function LiquidosSection() {
 
 // ─── Sementes ─────────────────────────────────────────────────────────────────
 
-function SementesSection() {
+function SementesSection({ navigation }) {
   const { sementes, adicionarSemente, removerSemente, atualizarConfigSemente, adicionarMovimentacaoSemente } = useStorage();
   const [catAtiva, setCatAtiva] = useState('milho');
   const [modalAdd, setModalAdd] = useState(false);
@@ -648,6 +649,10 @@ function SementesSection() {
 
   return (
     <View style={styles.secao}>
+      <TouchableOpacity style={styles.importarBtn} onPress={() => navigation.navigate('ScanNota', { tipoInicial: 'semente' })}>
+        <Ionicons name="camera-outline" size={16} color={PRIMARY} />
+        <Text style={styles.importarBtnTxt}>Importar por nota fiscal</Text>
+      </TouchableOpacity>
       {/* Tabs de categoria */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
         {CATEGORIAS_SEMENTES.map(c => {
@@ -718,7 +723,7 @@ function SementesSection() {
             <Input label="Quantidade" value={quantidade} onChangeText={setQuantidade} keyboardType="decimal-pad" thousands placeholder="Ex: 50" />
             <Text style={styles.unidadeLabel}>Unidade</Text>
             <View style={styles.unidadeRow}>
-              {['bag', 'kg'].map(u => (
+              {(catAtiva === 'milho' ? ['bag', 'sc'] : ['bag', 'kg']).map(u => (
                 <TouchableOpacity
                   key={u}
                   style={[styles.unidadeBtn, unidade === u && { backgroundColor: catInfo.cor, borderColor: catInfo.cor }]}
@@ -767,7 +772,7 @@ function SementesSection() {
 
 // ─── Tela principal ───────────────────────────────────────────────────────────
 
-export default function EstoqueScreen() {
+export default function EstoqueScreen({ navigation }) {
   const [abaAtiva, setAbaAtiva] = useState('adubos');
 
   return (
@@ -795,9 +800,9 @@ export default function EstoqueScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {abaAtiva === 'adubos' && <AdubosSection />}
-        {abaAtiva === 'liquidos' && <LiquidosSection />}
-        {abaAtiva === 'sementes' && <SementesSection />}
+        {abaAtiva === 'adubos' && <AdubosSection navigation={navigation} />}
+        {abaAtiva === 'liquidos' && <LiquidosSection navigation={navigation} />}
+        {abaAtiva === 'sementes' && <SementesSection navigation={navigation} />}
       </ScrollView>
     </View>
   );
@@ -816,6 +821,8 @@ const styles = StyleSheet.create({
   mainTabTxtAtivo: { fontFamily: 'Inter_700Bold', color: PRIMARY },
 
   secao: { padding: 16, gap: 10, paddingBottom: 100 },
+  importarBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1.5, borderColor: PRIMARY, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, alignSelf: 'flex-start' },
+  importarBtnTxt: { fontFamily: 'Inter_500Medium', fontSize: 13, color: PRIMARY },
 
   // Categoria tabs (líquidos)
   catTab: {

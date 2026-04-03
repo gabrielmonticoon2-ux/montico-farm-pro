@@ -3,6 +3,7 @@ import "./global.css";
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,10 +18,12 @@ import EstoqueScreen from './src/screens/EstoqueScreen';
 import TalhaoScreen from './src/screens/TalhaoScreen';
 import ColheitaScreen from './src/screens/ColheitaScreen';
 import RelatorioScreen from './src/screens/RelatorioScreen';
+import ScanNotaScreen from './src/screens/ScanNotaScreen';
 
 SplashScreen.preventAutoHideAsync();
 
-const Tab = createBottomTabNavigator();
+const Tab   = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 const PRIMARY  = '#1B4332';
 const ACCENT   = '#D4A017';
@@ -34,17 +37,9 @@ const TAB_ICONS = {
   Relatorio: 'bar-chart-outline',
 };
 
-function AppContent() {
-  const { farmCode, loading } = useFarm();
-
-  if (loading) return null;
-  if (!farmCode) return <FarmSetupScreen />;
-
+function TabNavigator() {
   return (
-    <StorageProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Tab.Navigator
+    <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ color, size }) => (
               <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
@@ -69,11 +64,28 @@ function AppContent() {
           })}
         >
           <Tab.Screen name="Home"      component={HomeScreen}      options={{ title: 'Montico Farm Pro', tabBarLabel: 'Início'   }} />
+          <Tab.Screen name="Relatorio" component={RelatorioScreen} options={{ title: 'Relatórios',       tabBarLabel: 'Relatório'}} />
           <Tab.Screen name="Estoque"   component={EstoqueScreen}   options={{ title: 'Estoque',          tabBarLabel: 'Estoque'  }} />
           <Tab.Screen name="Talhao"    component={TalhaoScreen}    options={{ title: 'Talhões',          tabBarLabel: 'Talhão'   }} />
           <Tab.Screen name="Colheita"  component={ColheitaScreen}  options={{ title: 'Colheita',         tabBarLabel: 'Colheita' }} />
-          <Tab.Screen name="Relatorio" component={RelatorioScreen} options={{ title: 'Relatórios',       tabBarLabel: 'Relatório'}} />
-        </Tab.Navigator>
+    </Tab.Navigator>
+  );
+}
+
+function AppContent() {
+  const { farmCode, loading } = useFarm();
+
+  if (loading) return null;
+  if (!farmCode) return <FarmSetupScreen />;
+
+  return (
+    <StorageProvider>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Tabs" component={TabNavigator} />
+          <Stack.Screen name="ScanNota" component={ScanNotaScreen} />
+        </Stack.Navigator>
       </NavigationContainer>
     </StorageProvider>
   );

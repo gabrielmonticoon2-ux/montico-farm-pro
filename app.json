@@ -29,7 +29,14 @@
       "baseUrl": "/montico-farm-pro"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para importar notas fiscais.",
+          "cameraPermission": "O app precisa da câmera para fotografar notas fiscais."
+        }
+      ]
     ],
     "extra": {
       "eas": {
