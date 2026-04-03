@@ -36,9 +36,10 @@ export default function ScanNotaScreen({ navigation, route }) {
     adicionarAdubo, adicionarLiquido, adicionarSemente,
   } = useStorage();
 
-  const [momento, setMomento]       = useState('captura'); // 'captura' | 'revisao'
-  const [carregando, setCarregando] = useState(false);
-  const [produtos, setProdutos]     = useState([]);
+  const [momento, setMomento]         = useState('captura'); // 'captura' | 'revisao'
+  const [carregando, setCarregando]   = useState(false);
+  const [progressoTxt, setProgressoTxt] = useState('Lendo nota fiscal...');
+  const [produtos, setProdutos]       = useState([]);
 
   // ─── captura ────────────────────────────────────────────────────────────────
 
@@ -75,8 +76,11 @@ export default function ScanNotaScreen({ navigation, route }) {
 
   async function processarImagem(base64) {
     setCarregando(true);
+    setProgressoTxt('Carregando motor de leitura...');
     try {
+      setProgressoTxt('Analisando a imagem...');
       const texto = await extrairTextoDaImagem(base64);
+      setProgressoTxt('Identificando produtos...');
       const encontrados = parsearProdutos(texto);
       if (encontrados.length === 0) {
         Alert.alert(
@@ -141,7 +145,7 @@ export default function ScanNotaScreen({ navigation, route }) {
     return (
       <View style={styles.loadingBox}>
         <ActivityIndicator size="large" color={PRIMARY} />
-        <Text style={styles.loadingTxt}>Lendo nota fiscal...</Text>
+        <Text style={styles.loadingTxt}>{progressoTxt}</Text>
       </View>
     );
   }
@@ -174,8 +178,8 @@ export default function ScanNotaScreen({ navigation, route }) {
           </TouchableOpacity>
 
           <Text style={styles.capturaAviso}>
-            A chave da Google Vision API precisa estar configurada em{'\n'}
-            src/services/ocrService.js para o OCR funcionar.
+            O texto é lido diretamente no seu dispositivo.{'\n'}
+            Nenhuma imagem é enviada para servidores externos.
           </Text>
         </View>
       </View>
